@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>MIMIC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #070707;
+      font-family: 'Space Grotesk', sans-serif;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      cursor: none;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #070707;
+      z-index: 10;
+    }
+    .screen.active { display: flex; }
+
+    /* Pause is an overlay, not a full screen */
+    #pause {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(7, 7, 7, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+    #pause.active { display: flex; }
+
+    /* ── Buttons ── */
+    .btn-fill, .btn-outline {
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: none;
+      border: none;
+      outline: none;
+      transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .btn-fill   { background: #fff; color: #000; }
+    .btn-outline { background: transparent; color: #555; border: 1.5px solid #222; }
+    .btn-row { display: flex; gap: 12px; margin-top: 40px; }
+    .hidden { display: none !important; }
+
+    /* Joystick focus states */
+    .btn-fill.focused   { transform: scale(1.04); box-shadow: 0 0 28px rgba(255,255,255,0.22); }
+    .btn-outline.focused { transform: scale(1.04); border-color: rgba(255,255,255,0.6); color: #fff; }
+
+    /* ── Title screen ── */
+    #title .eyebrow {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    #title h1 {
+      font-size: clamp(72px, 14vw, 120px);
+      font-weight: 700;
+      letter-spacing: -6px;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    #title .subtitle {
+      font-size: 14px;
+      color: #555;
+      font-weight: 300;
+      max-width: 340px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    #title .footer-hint {
+      position: fixed;
+      bottom: 24px;
+      font-size: 10px;
+      color: #2A2A2A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* ── How to play ── */
+    #howto .eyebrow {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    .how-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      width: min(380px, 90vw);
+    }
+    .how-card {
+      background: #0e0e0e;
+      border: 1px solid #141414;
+      padding: 20px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .how-card:first-child { border-radius: 8px 8px 0 0; }
+    .how-card:last-child  { border-radius: 0 0 8px 8px; }
+    .how-card .num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #FF2D2D;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .how-card .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .how-card .card-desc {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.55;
+    }
+
+    /* ── Game screen ── */
+    #game {
+      position: fixed;
+      inset: 0;
+      display: none;
+    }
+    #game.active { display: block; }
+
+    #c {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 20px 24px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .hud-block { line-height: 1.1; }
+    .hud-block.right { text-align: right; }
+    .hud-label {
+      display: block;
+      font-size: 9px;
+      color: #2A2A2A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .hud-val {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    #speed-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding-top: 2px;
+    }
+    .speed-label {
+      font-size: 9px;
+      color: #2A2A2A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .speed-pips { display: flex; gap: 4px; }
+    .pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1A1A1A;
+      transition: background 0.2s;
+    }
+    .pip.lit { background: #FF2D2D; }
+
+    /* ── Countdown overlay ── */
+    #countdown {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: none;
+      background: rgba(7,7,7,0.55);
+    }
+    #countdown.hidden { display: none !important; }
+    #countdown-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(80px, 18vw, 140px);
+      font-weight: 700;
+      letter-spacing: -4px;
+      color: #fff;
+    }
+
+    /* ── Bottom bar ── */
+    #bottom-bar {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 5;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #status-label {
+      font-size: 9px;
+      color: #2A2A2A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    #spawn-bar-track {
+      width: 180px;
+      height: 2px;
+      background: #131313;
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    #spawn-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #FF6633;
+      border-radius: 1px;
+    }
+    #collect-hint {
+      font-size: 10px;
+      color: #2A2A2A;
+      visibility: hidden;
+    }
+
+    /* ── Virtual joystick ── */
+    #joystick-wrap {
+      position: absolute;
+      bottom: 36px;
+      left: 36px;
+      width: 120px;
+      height: 120px;
+      z-index: 5;
+      touch-action: none;
+    }
+    #joystick-base {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 1.5px solid #1E1E1E;
+      background: rgba(255, 255, 255, 0.02);
+      position: relative;
+    }
+    #joystick-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* ── Pause overlay ── */
+    #pause h2 {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -3px;
+    }
+    #pause-score-row {
+      font-size: 12px;
+      color: #333;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 16px;
+    }
+
+    /* ── Game over ── */
+    #gameover h2 {
+      font-size: clamp(56px, 12vw, 96px);
+      font-weight: 700;
+      letter-spacing: -4px;
+      color: #FF2D2D;
+      line-height: 1;
+    }
+    #go-wave {
+      font-size: 11px;
+      color: #FF2D2D;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 12px;
+    }
+    .go-scores {
+      display: flex;
+      gap: 48px;
+      margin-top: 32px;
+    }
+    .go-score-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .go-score-label {
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .go-score-val {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ TITLE ═══════════════════════════════════════════════ -->
+<div id="title" class="screen active">
+  <p class="eyebrow">A SINGLE MECHANIC GAME</p>
+  <h1>MIMIC</h1>
+  <p class="subtitle">Your past is hunting you. Move smart — it remembers everything.</p>
+  <div class="btn-row">
+    <button class="btn-fill" id="title-play">PLAY</button>
+    <button class="btn-outline hidden" id="title-howto">HOW IT WORKS</button>
+  </div>
+  <p class="footer-hint">JOYSTICK ONLY</p>
+</div>
+
+<!-- ═══ HOW TO PLAY ══════════════════════════════════════════ -->
+<div id="howto" class="screen">
+  <p class="eyebrow">HOW IT WORKS</p>
+  <div class="how-cards">
+    <div class="how-card">
+      <span class="num">01</span>
+      <div>
+        <div class="card-title">Move and collect</div>
+        <div class="card-desc">Navigate the arena. Collect every glowing orb you can find.</div>
+      </div>
+    </div>
+    <div class="how-card">
+      <span class="num">02</span>
+      <div>
+        <div class="card-title">Your past hunts you</div>
+        <div class="card-desc">After 5 seconds, a mimic appears — tracing your exact path, closing in.</div>
+      </div>
+    </div>
+    <div class="how-card">
+      <span class="num">03</span>
+      <div>
+        <div class="card-title">Reset. But it remembers.</div>
+        <div class="card-desc">Collect enough to reset it. Every reset it comes back faster. There is no escape — only delay.</div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill">START</button>
+    <button class="btn-outline">BACK</button>
+  </div>
+</div>
+
+<!-- ═══ GAME ═════════════════════════════════════════════════ -->
+<div id="game">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-val" id="score-val">0</span>
+    </div>
+    <div id="speed-wrap">
+      <span class="speed-label">MIMIC SPEED</span>
+      <div class="speed-pips" id="pips"></div>
+    </div>
+    <div class="hud-block right">
+      <span class="hud-label">BEST</span>
+      <span class="hud-val" id="best-val" style="color:#333">0</span>
+    </div>
+  </div>
+
+  <div id="bottom-bar">
+    <span id="status-label">MIMIC SPAWNS IN</span>
+    <div id="spawn-bar-track">
+      <div id="spawn-bar-fill"></div>
+    </div>
+    <span id="collect-hint">collect 6 more to reset</span>
+  </div>
+
+  <div id="joystick-wrap">
+    <div id="joystick-base">
+      <div id="joystick-thumb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAUSE ════════════════════════════════════════════════ -->
+<div id="pause">
+  <h2>PAUSED</h2>
+  <p id="pause-score-row">SCORE: <span id="pause-score">0</span></p>
+  <div class="btn-row">
+    <button class="btn-fill">RESUME</button>
+    <button class="btn-outline">QUIT</button>
+  </div>
+</div>
+
+<!-- ═══ COUNTDOWN ════════════════════════════════════════════ -->
+<div id="countdown" class="hidden">
+  <span id="countdown-num"></span>
+</div>
+
+<!-- ═══ GAME OVER ════════════════════════════════════════════ -->
+<div id="gameover" class="screen">
+  <h2>CAUGHT.</h2>
+  <p id="go-wave">WAVE 1</p>
+  <div class="go-scores">
+    <div class="go-score-block">
+      <span class="go-score-label">SCORE</span>
+      <span class="go-score-val" id="go-score">0</span>
+    </div>
+    <div class="go-score-block">
+      <span class="go-score-label">BEST</span>
+      <span class="go-score-val" id="go-best" style="color:#555">0</span>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill">TRY AGAIN</button>
+    <button class="btn-outline">MENU</button>
+  </div>
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────
+const DELAY_START     = 5000;
+const DELAY_STEP_BASE = 500;
+const DELAY_STEP_INC  = 250;
+const DELAY_MIN       = 400;
+const P_SPEED         = 2.8;
+const P_R             = 11;
+const M_R             = 11;
+const C_R             = 5;
+const N_COL           = 14;
+const RESET_NEED      = 6;
+const MAX_PIPS        = 8;
+const JOY_R           = 38;
+
+// ── DOM ──────────────────────────────────────────────────────────
+const canvas      = document.getElementById('c');
+const ctx         = canvas.getContext('2d');
+const scoreValEl  = document.getElementById('score-val');
+const bestValEl   = document.getElementById('best-val');
+const statusEl    = document.getElementById('status-label');
+const barFillEl   = document.getElementById('spawn-bar-fill');
+const collectHint = document.getElementById('collect-hint');
+const pipsEl      = document.getElementById('pips');
+const goScoreEl   = document.getElementById('go-score');
+const goBestEl    = document.getElementById('go-best');
+const goWaveEl    = document.getElementById('go-wave');
+const pauseScoreEl = document.getElementById('pause-score');
+const jWrap        = document.getElementById('joystick-wrap');
+const jThumb      = document.getElementById('joystick-thumb');
+
+// ── State ────────────────────────────────────────────────────────
+let W, H;
+let px, py;
+let trail    = [];
+let history  = [];
+let cols     = [];
+let mx = -9999, my = -9999, mimicOn = false;
+let lastTargetX = -9999, lastTargetY = -9999;
+let score    = 0;
+let best     = 0;
+let toReset, resetCount, mimicDelay, spawnDelay;
+let keys     = {};
+let raf      = null;
+let isPaused = false;
+let isDead   = false;
+let flashColor = null, flashEnd = 0;
+
+// ── Menu navigation state ────────────────────────────────────────
+let menuFocus     = 0;
+let menuNavLock   = false;
+let menuRaf       = null;
+const NAV_LOCK_MS = 350;
+
+// Per-screen button actions [left/0, right/1]
+const SCREEN_ACTIONS = {
+  howto:    [() => startGame(),      () => goTo('title')],
+  pause:    [() => togglePause(),    () => quitToTitle()],
+  gameover: [() => startGame(),      () => goTo('title')],
+};
+
+function getTitleActions() {
+  if (localStorage.getItem('mimic_seen_howto') === '1') {
+    return [() => startGame(), () => goTo('howto')];
+  } else {
+    return [() => { markHowtoSeen(); goTo('howto'); }];
+  }
+}
+
+function markHowtoSeen() {
+  localStorage.setItem('mimic_seen_howto', '1');
+  document.getElementById('title-howto').classList.remove('hidden');
+}
+
+function getActiveMenuScreen() {
+  if (document.getElementById('pause').classList.contains('active')) return 'pause';
+  for (const id of SCREEN_IDS) {
+    if (document.getElementById(id).classList.contains('active')) return id;
+  }
+  return null;
+}
+
+function visibleBtns(screenId) {
+  return [...document.getElementById(screenId).querySelectorAll('.btn-fill, .btn-outline')]
+    .filter(b => !b.classList.contains('hidden'));
+}
+
+function refreshFocus(screenId) {
+  const el = document.getElementById(screenId);
+  if (!el) return;
+  let vi = 0;
+  el.querySelectorAll('.btn-fill, .btn-outline').forEach(b => {
+    if (b.classList.contains('hidden')) {
+      b.classList.remove('focused', 'holding');
+    } else {
+      b.classList.toggle('focused', vi === menuFocus);
+      b.classList.remove('holding');
+      vi++;
+    }
+  });
+}
+
+function processMenuJoy() {
+  const screenId = getActiveMenuScreen();
+  if (!screenId) { stopMenuLoop(); return; }
+
+  const count = visibleBtns(screenId).length;
+  if (menuFocus >= count) menuFocus = count - 1;
+
+  // Gameover: push direction directly fires that option (no two-step)
+  if (screenId === 'gameover' && !menuNavLock) {
+    if (joy.nx < -0.65 || joy.nx > 0.65) {
+      const idx = joy.nx > 0 ? 1 : 0;
+      menuFocus = idx; refreshFocus(screenId);
+      menuNavLock = true;
+      stopMenuLoop();
+      SCREEN_ACTIONS.gameover[idx]?.();
+      return;
+    }
+  }
+
+  // Left / right to change focus (only if target index exists)
+  if (!menuNavLock) {
+    if (joy.nx > 0.65 && menuFocus < count - 1) {
+      menuFocus++; refreshFocus(screenId);
+      menuNavLock = true;
+      setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
+    } else if (joy.nx < -0.65 && menuFocus > 0) {
+      menuFocus--; refreshFocus(screenId);
+      menuNavLock = true;
+      setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
+    }
+  }
+
+  // Confirm: hard push on focused side, or pull down on the focused button.
+  const hardLeft  = joy.nx < -0.9 && menuFocus === 0;
+  const hardRight = joy.nx >  0.9 && menuFocus === count - 1;
+  const pullDown  = joy.ny > 0.65;
+  if ((hardLeft || hardRight || pullDown) && !menuNavLock) {
+    stopMenuLoop();
+    const actions = screenId === 'title' ? getTitleActions() : SCREEN_ACTIONS[screenId];
+    actions?.[menuFocus]?.();
+  }
+}
+
+function menuLoop() {
+  processMenuJoy();
+  if (getActiveMenuScreen()) menuRaf = requestAnimationFrame(menuLoop);
+  else menuRaf = null;
+}
+
+function startMenuLoop() {
+  if (!menuRaf) menuRaf = requestAnimationFrame(menuLoop);
+}
+
+function stopMenuLoop() {
+  if (menuRaf) { cancelAnimationFrame(menuRaf); menuRaf = null; }
+}
+
+// ── Screen router ────────────────────────────────────────────────
+const SCREEN_IDS = ['title', 'howto', 'gameover'];
+
+function goTo(name) {
+  SCREEN_IDS.forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('pause').classList.remove('active');
+  document.getElementById('game').classList.remove('active');
+  document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused', 'holding'));
+
+  if (name === 'game') {
+    document.getElementById('game').classList.add('active');
+    stopMenuLoop();
+  } else {
+    document.getElementById(name).classList.add('active');
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    isPaused = false;
+    isDead   = false;
+    menuFocus = 0;
+    refreshFocus(name);
+    startMenuLoop();
+  }
+}
+
+function quitToTitle() {
+  isPaused = false;
+  goTo('title');
+}
+
+// ── Pip display ───────────────────────────────────────────────────
+function buildPips() {
+  pipsEl.innerHTML = '';
+  for (let i = 0; i < MAX_PIPS; i++) {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i < resetCount ? ' lit' : '');
+    pipsEl.appendChild(p);
+  }
+}
+
+// ── Bar color (orange → red as resets increase) ───────────────────
+function barColor() {
+  const t = Math.min(resetCount / MAX_PIPS, 1);
+  const g = Math.floor(100 * (1 - t));
+  return `rgb(255,${g},0)`;
+}
+
+// ── Virtual joystick ─────────────────────────────────────────────
+const joy = { nx: 0, ny: 0, dragging: false, _active: false, _bx: 0, _by: 0 };
+
+function joyStart(cx, cy) {
+  const r = jWrap.getBoundingClientRect();
+  joy._bx = r.left + r.width  / 2;
+  joy._by = r.top  + r.height / 2;
+  joy._active  = true;
+  joy.dragging = true;
+  joyMove(cx, cy);
+}
+function joyMove(cx, cy) {
+  if (!joy._active) return;
+  let dx = cx - joy._bx, dy = cy - joy._by;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d > JOY_R) { dx = dx / d * JOY_R; dy = dy / d * JOY_R; }
+  joy.nx = dx / JOY_R;
+  joy.ny = dy / JOY_R;
+  jThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
+function joyEnd() {
+  joy._active  = false;
+  joy.dragging = false;
+  joy.nx = 0; joy.ny = 0;
+  jThumb.style.transform = 'translate(-50%, -50%)';
+}
+
+jWrap.addEventListener('mousedown',  e => { e.preventDefault(); joyStart(e.clientX, e.clientY); });
+window.addEventListener('mousemove', e => { if (joy._active) joyMove(e.clientX, e.clientY); });
+window.addEventListener('mouseup',   ()  => joyEnd());
+jWrap.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; joyStart(t.clientX, t.clientY); }, { passive: false });
+window.addEventListener('touchmove', e => { if (joy._active) { const t = e.touches[0]; joyMove(t.clientX, t.clientY); } }, { passive: true });
+window.addEventListener('touchend',  ()  => joyEnd());
+
+// ── Spawn collectibles ────────────────────────────────────────────
+function spawnCols() {
+  const list = [];
+  for (let i = 0; i < N_COL; i++) {
+    let x, y, n = 0;
+    do {
+      x = 80 + Math.random() * (W - 160);
+      y = 80 + Math.random() * (H - 160);
+      n++;
+    } while (n < 20 && x < 200 && y > H - 200);
+    list.push({ x, y, alive: true, pulse: Math.random() * Math.PI * 2 });
+  }
+  return list;
+}
+
+// ── Reset mimic ───────────────────────────────────────────────────
+function resetMimic() {
+  const cut = DELAY_STEP_BASE + resetCount * DELAY_STEP_INC;
+  mimicDelay = Math.max(DELAY_MIN, mimicDelay - cut);
+  resetCount++;
+  mimicOn = false;
+  mx = -9999; my = -9999;
+  lastTargetX = -9999; lastTargetY = -9999;
+  history = [];
+  trail   = [];
+  toReset = RESET_NEED;
+  spawnDelay = Math.max(2000, 5000 - resetCount * 500);
+
+  buildPips();
+  statusEl.textContent     = 'MIMIC SPAWNS IN';
+  barFillEl.style.background = barColor();
+  barFillEl.style.width    = '0%';
+  collectHint.style.visibility = 'hidden';
+
+  flashColor = 'rgba(255,255,255,0.06)';
+  flashEnd   = performance.now() + 120;
+}
+
+// ── Trigger death ─────────────────────────────────────────────────
+function triggerDeath() {
+  isDead = true;
+  const newBest = score > best;
+  if (newBest) best = score;
+
+  flashColor = 'rgba(255,45,45,0.22)';
+  flashEnd   = performance.now() + 200;
+
+  goScoreEl.textContent = score;
+  goBestEl.textContent  = best;
+  goWaveEl.textContent  = 'WAVE ' + (resetCount + 1);
+  goBestEl.style.color  = newBest ? '#fff' : '#555';
+
+  setTimeout(() => { goTo('gameover'); }, 280);
+}
+
+// ── Countdown (3 2 1 GO) ──────────────────────────────────────────
+function runCountdown(callback) {
+  const el   = document.getElementById('countdown');
+  const num  = document.getElementById('countdown-num');
+  const steps = ['3', '2', '1', 'GO'];
+  let i = 0;
+  el.classList.remove('hidden');
+  function tick() {
+    num.textContent = steps[i++];
+    const isGo = steps[i - 1] === 'GO';
+    setTimeout(() => {
+      if (isGo) { el.classList.add('hidden'); callback(); }
+      else tick();
+    }, isGo ? 600 : 900);
+  }
+  tick();
+}
+
+// ── Start / restart game ──────────────────────────────────────────
+function startGame() {
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+
+  px = W / 2; py = H / 2;
+  trail    = [];
+  history  = [];
+  mimicOn  = false;
+  mx = -9999; my = -9999;
+  lastTargetX = -9999; lastTargetY = -9999;
+  score      = 0;
+  toReset    = RESET_NEED;
+  resetCount = 0;
+  mimicDelay = DELAY_START;
+  spawnDelay = 5000;
+  isPaused   = false;
+  isDead     = false;
+  flashColor = null;
+  flashEnd   = 0;
+
+  cols = spawnCols();
+  buildPips();
+
+  scoreValEl.textContent        = '0';
+  bestValEl.textContent         = best;
+  bestValEl.style.color         = '#333';
+  statusEl.textContent          = 'MIMIC SPAWNS IN';
+  barFillEl.style.width         = '0%';
+  barFillEl.style.background    = barColor();
+  collectHint.style.visibility  = 'hidden';
+
+  goTo('game');
+  runCountdown(() => { raf = requestAnimationFrame(loop); });
+}
+
+// ── Game loop ─────────────────────────────────────────────────────
+function loop(ts) {
+  if (isDead) return;
+  raf = requestAnimationFrame(loop);
+
+  if (isPaused) return;
+
+  // Input
+  let dx = 0, dy = 0;
+  if (joy.dragging) {
+    dx = joy.nx; dy = joy.ny;
+  } else {
+    if (keys['ArrowLeft']  || keys['a'] || keys['A']) dx -= 1;
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) dx += 1;
+    if (keys['ArrowUp']    || keys['w'] || keys['W']) dy -= 1;
+    if (keys['ArrowDown']  || keys['s'] || keys['S']) dy += 1;
+  }
+
+  const mag = Math.sqrt(dx * dx + dy * dy);
+  if (mag > 0) {
+    px += (dx / mag) * P_SPEED;
+    py += (dy / mag) * P_SPEED;
+  }
+  px = Math.max(P_R, Math.min(W - P_R, px));
+  py = Math.max(P_R, Math.min(H - P_R, py));
+
+  history.push({ x: px, y: py, t: ts });
+  trail.push({ x: px, y: py });
+  if (trail.length > 80) trail.shift();
+
+  // Mimic spawn countdown
+  if (!mimicOn) {
+    const age = history.length > 0 ? ts - history[0].t : 0;
+    barFillEl.style.width = Math.min(age / spawnDelay * 100, 100) + '%';
+    if (age >= spawnDelay) {
+      mimicOn = true;
+      statusEl.textContent          = 'MIMIC ACTIVE';
+      barFillEl.style.width         = '100%';
+      collectHint.style.visibility  = 'visible';
+    }
+  }
+
+  // Mimic tracking + collision
+  if (mimicOn) {
+    const targetT = ts - mimicDelay;
+    let newTX = lastTargetX, newTY = lastTargetY;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].t <= targetT) { newTX = history[i].x; newTY = history[i].y; break; }
+    }
+
+    if (Math.abs(newTX - lastTargetX) > 0.5 || Math.abs(newTY - lastTargetY) > 0.5) {
+      // Player was moving in history — follow exact path
+      mx = newTX; my = newTY;
+    } else {
+      // Player was stationary in history — keep closing in on current position
+      const ddx = px - mx, ddy = py - my;
+      const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+      if (dist > P_SPEED) { mx += (ddx / dist) * P_SPEED; my += (ddy / dist) * P_SPEED; }
+      else { mx = px; my = py; }
+    }
+    lastTargetX = newTX; lastTargetY = newTY;
+
+    const cdx = px - mx, cdy = py - my;
+    if (mx !== -9999 && Math.sqrt(cdx * cdx + cdy * cdy) < P_R + M_R - 2) {
+      draw(ts);
+      triggerDeath();
+      return;
+    }
+  }
+
+  // Collect orbs
+  let allDead = true;
+  for (const c of cols) {
+    if (!c.alive) continue;
+    allDead = false;
+    const cdx = px - c.x, cdy = py - c.y;
+    if (Math.sqrt(cdx * cdx + cdy * cdy) < P_R + C_R) {
+      c.alive = false;
+      score++;
+      toReset--;
+      scoreValEl.textContent = score;
+      if (score > best) bestValEl.style.color = '#fff';
+      collectHint.textContent = 'collect ' + Math.max(0, toReset) + ' more to reset';
+      if (toReset <= 0) resetMimic();
+    }
+  }
+  if (allDead) cols = spawnCols();
+
+  draw(ts);
+}
+
+// ── Draw ──────────────────────────────────────────────────────────
+function draw(ts) {
+  ctx.fillStyle = '#070707';
+  ctx.fillRect(0, 0, W, H);
+
+  // Trail
+  for (let i = 0; i < trail.length; i++) {
+    const alpha = (i / trail.length) * 0.11;
+    ctx.beginPath();
+    ctx.arc(trail[i].x, trail[i].y, P_R * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+    ctx.fill();
+  }
+
+  // Orbs
+  for (const c of cols) {
+    if (!c.alive) continue;
+    c.pulse += 0.05;
+    const s  = 1 + Math.sin(c.pulse) * 0.18;
+    const gr = C_R * 4 * s;
+    const g  = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, gr);
+    g.addColorStop(0, 'rgba(255,210,40,0.22)');
+    g.addColorStop(1, 'rgba(255,210,40,0)');
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, gr, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, C_R * s, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFD428';
+    ctx.fill();
+  }
+
+  // Mimic
+  if (mimicOn && mx !== -9999) {
+    const intensity = Math.min(resetCount / MAX_PIPS, 1);
+    const glowR     = M_R * (3.5 + intensity * 2);
+    const innerR    = Math.floor(45 * (1 - intensity));
+    const innerA    = (0.35 + intensity * 0.2).toFixed(2);
+    const mg = ctx.createRadialGradient(mx, my, 0, mx, my, glowR);
+    mg.addColorStop(0, `rgba(255,${innerR},${innerR},${innerA})`);
+    mg.addColorStop(1, 'rgba(255,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(mx, my, glowR, 0, Math.PI * 2);
+    ctx.fillStyle = mg;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(mx, my, M_R, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF2D2D';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(mx, my, M_R * 0.45, 0, Math.PI * 2);
+    ctx.fillStyle = '#FF7070';
+    ctx.fill();
+  }
+
+  // Player glow
+  const pg = ctx.createRadialGradient(px, py, 0, px, py, P_R * 2.8);
+  pg.addColorStop(0, 'rgba(255,255,255,0.28)');
+  pg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(px, py, P_R * 2.8, 0, Math.PI * 2);
+  ctx.fillStyle = pg;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(px, py, P_R, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+
+  // Flash overlay
+  if (performance.now() < flashEnd) {
+    ctx.fillStyle = flashColor;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ── Pause ─────────────────────────────────────────────────────────
+function togglePause() {
+  if (!isPaused) {
+    isPaused = true;
+    pauseScoreEl.textContent = score;
+    document.getElementById('pause').classList.add('active');
+    menuFocus = 0;
+    refreshFocus('pause');
+    startMenuLoop();
+  } else {
+    document.getElementById('pause').classList.remove('active');
+    document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused', 'holding'));
+    stopMenuLoop();
+    runCountdown(() => { isPaused = false; });
+  }
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'Escape' && document.getElementById('game').classList.contains('active')) {
+    togglePause();
+  }
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// ── Resize ────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (document.getElementById('game').classList.contains('active')) {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+});
+
+// ── Arcade joystick + key forwarding via postMessage ─────────────
+window.addEventListener('message', ({ data }) => {
+  if (!data) return;
+  if (data.type === 'JOYSTICK') {
+    joy.nx       = data.x;
+    joy.ny       = data.y;
+    joy.dragging = (data.x !== 0 || data.y !== 0);
+    joy._active  = joy.dragging;
+    const tx = data.x * JOY_R, ty = data.y * JOY_R;
+    jThumb.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
+  }
+  if (data.type === 'KEY' && data.key === 'Escape') {
+    if (document.getElementById('game').classList.contains('active')) togglePause();
+  }
+});
+
+// ── Hide in-game joystick when running inside arcade iframe ───────
+if (window !== window.top) {
+  document.getElementById('joystick-wrap').style.display = 'none';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+if (localStorage.getItem('mimic_seen_howto') === '1') {
+  document.getElementById('title-howto').classList.remove('hidden');
+}
+menuFocus = 0;
+refreshFocus('title');
+startMenuLoop();
+document.getElementById('title').classList.add('active');
+</script>
+</body>
+</html>

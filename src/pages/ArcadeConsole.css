@@ -3,8 +3,8 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 20px 20px 0;
-  background: linear-gradient(160deg, #5E1923 0%, #3F0C14 60%);
+  padding: 28px 28px 0;
+  background: #11051A;
   overflow: hidden;
 }
 
@@ -22,13 +22,14 @@
 .console-screen {
   flex: 1;
   background: #0a0a0a;
-  border-radius: 12px;
-  box-shadow:
-    inset 0 2px 12px rgba(0, 0, 0, 0.9),
-    inset 0 0 0 1.5px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.9);
   overflow: hidden;
   position: relative;
   z-index: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M100 0C190 0 200 5 200 100C200 195 195 200 100 200C5 200 0 195 0 100C0 5 5 0 100 0Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M100 0C190 0 200 5 200 100C200 195 195 200 100 200C5 200 0 195 0 100C0 5 5 0 100 0Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 @keyframes screen-shine {
@@ -54,7 +55,7 @@
 .console-panel {
   height: 180px;
   flex-shrink: 0;
-  margin: 40px -20px 0;
+  margin: 40px -28px 0;
   padding-bottom: 40px;
   border-radius: 0;
   display: flex;
@@ -64,9 +65,9 @@
   position: relative;
   z-index: 2;
   background: linear-gradient(180deg,
-    #7a2535 0%,
-    #3f0c14 45%,
-    #200810 100%
+    #11051A 0%,
+    #2C133E 50%,
+    #482363 100%
   );
   box-shadow:
     0 -2px 0 rgba(255, 255, 255, 0.14),

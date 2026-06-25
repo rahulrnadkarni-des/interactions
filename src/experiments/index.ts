@@ -1,11 +1,12 @@
-import { lazy, LazyExoticComponent } from 'react'
+import { type ComponentType } from 'react'
+import JoystickSVG from '../components/joystick/JoystickSVG'
 
 export interface Experiment {
   slug: string
   title: string
   tool: string
   date: string
-  preview: LazyExoticComponent<object>
+  preview: ComponentType
 }
 
 export const experiments: Experiment[] = [
@@ -14,6 +15,6 @@ export const experiments: Experiment[] = [
     title: 'Haptic Joystick',
     tool: 'React + Framer Motion',
     date: '24 Jun 2026',
-    preview: lazy(() => import('../components/joystick/JoystickPreview')),
+    preview: JoystickSVG,
   },
 ]

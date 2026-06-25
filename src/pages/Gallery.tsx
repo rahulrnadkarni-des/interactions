@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import { experiments } from '../experiments'
 import './Gallery.css'
 
@@ -12,9 +11,7 @@ export default function Gallery() {
           return (
             <div key={exp.slug} className="gallery-card">
               <div className="card-image">
-                <Suspense fallback={null}>
-                  <Preview />
-                </Suspense>
+                <Preview />
               </div>
               <div className="card-meta">
                 <div className="card-text">

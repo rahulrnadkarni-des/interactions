@@ -1,32 +1,49 @@
-# React + TypeScript + Vite
+# Daily AI Challenge
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A personal arcade console UI built with React + Vite. Each experiment is a small interactive game or component built around a single haptic joystick.
 
-Currently, two official plugins are available:
+Live at **[rahulrn-daily-ai.vercel.app](https://rahulrn-daily-ai.vercel.app)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Concept
 
-## React Compiler
+The UI is modelled after a physical arcade cabinet — a dark red shell, a game screen, and a joystick control panel. Games are built to be controlled entirely through the joystick.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the Oxlint configuration
+- React + TypeScript + Vite
+- Framer Motion — spring physics for joystick movement
+- @use-gesture/react — drag input with circular clamping
+- Vercel — deployment
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Structure
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+src/
+  pages/
+    ArcadeConsole.tsx   # main shell layout (screen + joystick panel)
+    Gallery.tsx         # experiment card grid at /gallery
+  components/
+    joystick/
+      JoystickSVG.tsx   # self-contained haptic joystick component
+  experiments/
+    index.ts            # experiment registry
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Experiments
+
+| Slug | Title | Date |
+|------|-------|------|
+| `joystick` | Haptic Joystick | 24 Jun 2026 |
+
+## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+## Adding a new experiment
+
+1. Build your component under `src/components/`
+2. Register it in `src/experiments/index.ts`
+3. It will appear automatically in the gallery at `/gallery`

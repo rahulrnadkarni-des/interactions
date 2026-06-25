@@ -102,6 +102,156 @@
       text-transform: uppercase;
     }
 
+    /* ── Controls tutorial ── */
+    #controls-tutorial .eyebrow {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    #controls-tutorial h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin: 0 0 48px;
+    }
+    .ctrl-demo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+    }
+    .ctrl-btns {
+      display: flex;
+      gap: 12px;
+    }
+    .ctrl-btn {
+      padding: 13px 22px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 10px;
+      border: 1.5px solid #222;
+      background: transparent;
+      color: #2a2a2a;
+    }
+    .ctrl-btn-l { animation: ctrl-left-btn 7s ease-in-out infinite; }
+    .ctrl-btn-r { animation: ctrl-right-btn 7s ease-in-out infinite; }
+
+    .ctrl-joy-outer {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ctrl-joy {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #0e0e0e;
+      border: 1.5px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .ctrl-thumb {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      animation: ctrl-thumb 7s ease-in-out infinite;
+    }
+    .ctrl-arr {
+      position: absolute;
+      font-size: 13px;
+      color: #1e1e1e;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .ctrl-arr-l { left: 4px; top: 50%; transform: translateY(-50%); animation: ctrl-arr-l 7s ease-in-out infinite; }
+    .ctrl-arr-r { right: 4px; top: 50%; transform: translateY(-50%); animation: ctrl-arr-r 7s ease-in-out infinite; }
+    .ctrl-arr-d { bottom: 4px; left: 50%; transform: translateX(-50%); animation: ctrl-arr-d 7s ease-in-out infinite; }
+
+    .ctrl-labels {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .ctrl-lbl-select,
+    .ctrl-lbl-confirm {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #222;
+    }
+    .ctrl-lbl-select  { animation: ctrl-hint-select  7s ease-in-out infinite; }
+    .ctrl-lbl-confirm { animation: ctrl-hint-confirm 7s ease-in-out infinite; }
+
+    /* 7s loop:
+       0-0.7s  (0-10%):   neutral
+       0.7-2.1s (10-30%): joystick left → left btn focused
+       2.1-2.8s (30-40%): return center
+       2.8-4.2s (40-60%): joystick right → right btn focused
+       4.2-4.9s (60-70%): return center (right still focused briefly)
+       4.9-6.0s (70-86%): joystick down → right btn confirms
+       6.0-7.0s (86-100%): reset
+    */
+    @keyframes ctrl-thumb {
+      0%, 8%           { transform: translate(0, 0); }
+      15%, 28%         { transform: translate(-22px, 0); }
+      38%, 42%         { transform: translate(0, 0); }
+      48%, 58%         { transform: translate(22px, 0); }
+      65%, 68%         { transform: translate(0, 0); }
+      74%, 84%         { transform: translate(0, 22px); }
+      92%, 100%        { transform: translate(0, 0); }
+    }
+    @keyframes ctrl-left-btn {
+      0%, 12%          { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
+      18%, 26%         { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); }
+      36%, 100%        { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
+    }
+    @keyframes ctrl-right-btn {
+      0%, 44%                  { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
+      50%, 68%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      76%, 82%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      85%                      { color: #000; border-color: #fff; transform: scale(1.08); box-shadow: 0 0 32px rgba(255,255,255,0.3); background: #fff; }
+      93%, 100%                { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
+    }
+    @keyframes ctrl-arr-l {
+      0%, 12%          { color: #1e1e1e; }
+      18%, 28%         { color: #888; }
+      36%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-arr-r {
+      0%, 44%          { color: #1e1e1e; }
+      50%, 68%         { color: #888; }
+      74%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-arr-d {
+      0%, 68%          { color: #1e1e1e; }
+      74%, 84%         { color: #888; }
+      92%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-hint-select {
+      0%, 10%          { color: #222; }
+      15%, 62%         { color: #555; }
+      70%, 100%        { color: #222; }
+    }
+    @keyframes ctrl-hint-confirm {
+      0%, 68%          { color: #222; }
+      74%, 86%         { color: #555; }
+      93%, 100%        { color: #222; }
+    }
+
     /* ── How to play ── */
     #howto .eyebrow {
       font-size: 10px;
@@ -354,8 +504,35 @@
 </head>
 <body>
 
+<!-- ═══ CONTROLS TUTORIAL ════════════════════════════════════ -->
+<div id="controls-tutorial" class="screen">
+  <p class="eyebrow">Before you begin</p>
+  <h2>Controls</h2>
+  <div class="ctrl-demo">
+    <div class="ctrl-btns">
+      <div class="ctrl-btn ctrl-btn-l">Option A</div>
+      <div class="ctrl-btn ctrl-btn-r">Option B</div>
+    </div>
+    <div class="ctrl-joy-outer">
+      <div class="ctrl-joy">
+        <div class="ctrl-thumb"></div>
+      </div>
+      <div class="ctrl-arr ctrl-arr-l">←</div>
+      <div class="ctrl-arr ctrl-arr-r">→</div>
+      <div class="ctrl-arr ctrl-arr-d">↓</div>
+    </div>
+    <div class="ctrl-labels">
+      <span class="ctrl-lbl-select">Push left or right to select</span>
+      <span class="ctrl-lbl-confirm">Push down to confirm</span>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill" id="ctrl-got-it">Got it</button>
+  </div>
+</div>
+
 <!-- ═══ TITLE ═══════════════════════════════════════════════ -->
-<div id="title" class="screen active">
+<div id="title" class="screen">
   <p class="eyebrow">A SINGLE MECHANIC GAME</p>
   <h1>MIMIC</h1>
   <p class="subtitle">Your past is hunting you. Move smart — it remembers everything.</p>
@@ -469,10 +646,6 @@
 
 <script>
 // ── Constants ────────────────────────────────────────────────────
-const DELAY_START     = 5000;
-const DELAY_STEP_BASE = 500;
-const DELAY_STEP_INC  = 250;
-const DELAY_MIN       = 400;
 const P_SPEED         = 2.8;
 const M_SPEED         = P_SPEED * 1.15;
 let P_R               = 11;
@@ -520,7 +693,7 @@ let mIdx = 0;
 let loopStartT = 0;
 let score    = 0;
 let best     = 0;
-let toReset, resetCount, mimicDelay, spawnDelay;
+let toReset, resetCount, spawnDelay;
 let keys     = {};
 let raf      = null;
 let isPaused = false;
@@ -530,13 +703,14 @@ let flashColor = null, flashEnd = 0;
 // ── Menu navigation state ────────────────────────────────────────
 let menuFocus      = 0;
 let menuNavLock    = false;
-let menuInputLock  = false;
+let requireJoyRelease = false;
 let menuRaf        = null;
 const NAV_LOCK_MS  = 350;
 const NAV_THRESH   = 0.85;
 
 // Per-screen button actions [left/0, right/1]
 const SCREEN_ACTIONS = {
+  'controls-tutorial': [() => { localStorage.setItem('mimic_seen_controls', '1'); goTo('title'); }],
   howto:    [() => startGame(),      () => goTo('title')],
   pause:    [() => togglePause(),    () => quitToTitle()],
   gameover: [() => startGame(),      () => goTo('title')],
@@ -574,10 +748,9 @@ function refreshFocus(screenId) {
   let vi = 0;
   el.querySelectorAll('.btn-fill, .btn-outline').forEach(b => {
     if (b.classList.contains('hidden')) {
-      b.classList.remove('focused', 'holding');
+      b.classList.remove('focused');
     } else {
       b.classList.toggle('focused', vi === menuFocus);
-      b.classList.remove('holding');
       vi++;
     }
   });
@@ -586,7 +759,11 @@ function refreshFocus(screenId) {
 function processMenuJoy() {
   const screenId = getActiveMenuScreen();
   if (!screenId) { stopMenuLoop(); return; }
-  if (menuNavLock || menuInputLock) return;
+  if (menuNavLock) return;
+  if (requireJoyRelease) {
+    if (Math.sqrt(joy.nx ** 2 + joy.ny ** 2) < 0.2) requireJoyRelease = false;
+    return;
+  }
 
   const count = visibleBtns(screenId).length;
   if (menuFocus >= count) menuFocus = count - 1;
@@ -624,13 +801,13 @@ function stopMenuLoop() {
 }
 
 // ── Screen router ────────────────────────────────────────────────
-const SCREEN_IDS = ['title', 'howto', 'gameover'];
+const SCREEN_IDS = ['controls-tutorial', 'title', 'howto', 'gameover'];
 
 function goTo(name) {
   SCREEN_IDS.forEach(id => document.getElementById(id).classList.remove('active'));
   document.getElementById('pause').classList.remove('active');
   document.getElementById('game').classList.remove('active');
-  document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused', 'holding'));
+  document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused'));
 
   if (name === 'game') {
     document.getElementById('game').classList.add('active');
@@ -642,8 +819,7 @@ function goTo(name) {
     isDead   = false;
     menuFocus = 0;
     refreshFocus(name);
-    menuInputLock = true;
-    setTimeout(() => { menuInputLock = false; }, 400);
+    requireJoyRelease = true;
     startMenuLoop();
   }
 }
@@ -721,8 +897,6 @@ function spawnCols() {
 
 // ── Reset mimic ───────────────────────────────────────────────────
 function resetMimic() {
-  const cut = DELAY_STEP_BASE + resetCount * DELAY_STEP_INC;
-  mimicDelay = Math.max(DELAY_MIN, mimicDelay - cut);
   resetCount++;
   updateScale();
   mimicOn = false;
@@ -795,7 +969,6 @@ function startGame() {
   score      = 0;
   toReset    = RESET_NEED;
   resetCount = 0;
-  mimicDelay = DELAY_START;
   spawnDelay = 5000;
   isPaused   = false;
   isDead     = false;
@@ -853,7 +1026,7 @@ function loop(ts) {
   if (!mimicOn) {
     const age = ts - loopStartT;
     barFillEl.style.width = Math.min(age / spawnDelay * 100, 100) + '%';
-    if (age >= spawnDelay && history.length > 0) {
+    if (age >= spawnDelay) {
       mimicOn = true;
       statusEl.textContent         = 'MIMIC ACTIVE';
       barFillEl.style.width        = '100%';
@@ -872,6 +1045,7 @@ function loop(ts) {
       if (dist <= M_SPEED) { mx = tx; my = ty; mIdx++; }
       else { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
     } else {
+      if (mx === -9999) { mx = px; my = py; }
       const dx = px - mx, dy = py - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist > 0.5) { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
@@ -992,7 +1166,7 @@ function togglePause() {
     startMenuLoop();
   } else {
     document.getElementById('pause').classList.remove('active');
-    document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused', 'holding'));
+    document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused'));
     stopMenuLoop();
     runCountdown(() => { isPaused = false; });
   }
@@ -1034,17 +1208,18 @@ window.addEventListener('message', ({ data }) => {
 
 // ── Hide in-game joystick when running inside arcade iframe ───────
 if (window !== window.top) {
-  document.getElementById('joystick-wrap').style.display = 'none';
+  jWrap.style.display = 'none';
 }
 
 // ── Boot ──────────────────────────────────────────────────────────
 if (localStorage.getItem('mimic_seen_howto') === '1') {
   document.getElementById('title-howto').classList.remove('hidden');
 }
+const bootScreen = localStorage.getItem('mimic_seen_controls') === '1' ? 'title' : 'controls-tutorial';
 menuFocus = 0;
-refreshFocus('title');
+refreshFocus(bootScreen);
 startMenuLoop();
-document.getElementById('title').classList.add('active');
+document.getElementById(bootScreen).classList.add('active');
 </script>
 </body>
 </html>

@@ -18,7 +18,6 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
-      cursor: none;
     }
 
     /* ── Screens ── */
@@ -58,7 +57,6 @@
       font-weight: 600;
       letter-spacing: 1px;
       text-transform: uppercase;
-      cursor: none;
       border: none;
       outline: none;
       transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s, color 0.12s;
@@ -476,9 +474,20 @@ const DELAY_STEP_BASE = 500;
 const DELAY_STEP_INC  = 250;
 const DELAY_MIN       = 400;
 const P_SPEED         = 2.8;
-const P_R             = 11;
-const M_R             = 11;
-const C_R             = 5;
+const M_SPEED         = P_SPEED * 1.15;
+let P_R               = 11;
+let M_R               = 11;
+let C_R               = 5;
+
+function updateScale() {
+  const vmin = Math.min(W, H);
+  const s  = vmin < 500 ? 0.55 : vmin < 768 ? 0.72 : 1;
+  const gs = vmin < 500 ? 0.35 : vmin < 768 ? 0.65 : 1;
+  P_R = Math.round(11 * s);
+  const mr = Math.min(resetCount, 9);
+  M_R = Math.round(11 * s + 1.5 * mr * (mr + 1) * gs);
+  C_R = Math.max(2, Math.round(5 * s));
+}
 const N_COL           = 14;
 const RESET_NEED      = 6;
 const MAX_PIPS        = 8;
@@ -507,7 +516,8 @@ let trail    = [];
 let history  = [];
 let cols     = [];
 let mx = -9999, my = -9999, mimicOn = false;
-let lastTargetX = -9999, lastTargetY = -9999;
+let mIdx = 0;
+let loopStartT = 0;
 let score    = 0;
 let best     = 0;
 let toReset, resetCount, mimicDelay, spawnDelay;
@@ -518,10 +528,12 @@ let isDead   = false;
 let flashColor = null, flashEnd = 0;
 
 // ── Menu navigation state ────────────────────────────────────────
-let menuFocus     = 0;
-let menuNavLock   = false;
-let menuRaf       = null;
-const NAV_LOCK_MS = 350;
+let menuFocus      = 0;
+let menuNavLock    = false;
+let menuInputLock  = false;
+let menuRaf        = null;
+const NAV_LOCK_MS  = 350;
+const NAV_THRESH   = 0.85;
 
 // Per-screen button actions [left/0, right/1]
 const SCREEN_ACTIONS = {
@@ -574,40 +586,23 @@ function refreshFocus(screenId) {
 function processMenuJoy() {
   const screenId = getActiveMenuScreen();
   if (!screenId) { stopMenuLoop(); return; }
+  if (menuNavLock || menuInputLock) return;
 
   const count = visibleBtns(screenId).length;
   if (menuFocus >= count) menuFocus = count - 1;
 
-  // Gameover: push direction directly fires that option (no two-step)
-  if (screenId === 'gameover' && !menuNavLock) {
-    if (joy.nx < -0.65 || joy.nx > 0.65) {
-      const idx = joy.nx > 0 ? 1 : 0;
-      menuFocus = idx; refreshFocus(screenId);
-      menuNavLock = true;
-      stopMenuLoop();
-      SCREEN_ACTIONS.gameover[idx]?.();
-      return;
-    }
-  }
+  let targetIdx = menuFocus;
+  let triggered = false;
 
-  // Left / right to change focus (only if target index exists)
-  if (!menuNavLock) {
-    if (joy.nx > 0.65 && menuFocus < count - 1) {
-      menuFocus++; refreshFocus(screenId);
-      menuNavLock = true;
-      setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
-    } else if (joy.nx < -0.65 && menuFocus > 0) {
-      menuFocus--; refreshFocus(screenId);
-      menuNavLock = true;
-      setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
-    }
-  }
+  if (joy.nx < -NAV_THRESH)            { targetIdx = 0;                    triggered = true; }
+  else if (joy.nx > NAV_THRESH)        { targetIdx = Math.min(1, count-1); triggered = true; }
+  else if (joy.ny > NAV_THRESH)        {                                    triggered = true; }
 
-  // Confirm: hard push on focused side, or pull down on the focused button.
-  const hardLeft  = joy.nx < -0.9 && menuFocus === 0;
-  const hardRight = joy.nx >  0.9 && menuFocus === count - 1;
-  const pullDown  = joy.ny > 0.65;
-  if ((hardLeft || hardRight || pullDown) && !menuNavLock) {
+  if (triggered) {
+    menuFocus = targetIdx;
+    refreshFocus(screenId);
+    menuNavLock = true;
+    setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
     stopMenuLoop();
     const actions = screenId === 'title' ? getTitleActions() : SCREEN_ACTIONS[screenId];
     actions?.[menuFocus]?.();
@@ -647,6 +642,8 @@ function goTo(name) {
     isDead   = false;
     menuFocus = 0;
     refreshFocus(name);
+    menuInputLock = true;
+    setTimeout(() => { menuInputLock = false; }, 400);
     startMenuLoop();
   }
 }
@@ -727,9 +724,10 @@ function resetMimic() {
   const cut = DELAY_STEP_BASE + resetCount * DELAY_STEP_INC;
   mimicDelay = Math.max(DELAY_MIN, mimicDelay - cut);
   resetCount++;
+  updateScale();
   mimicOn = false;
   mx = -9999; my = -9999;
-  lastTargetX = -9999; lastTargetY = -9999;
+  mIdx = 0; loopStartT = 0;
   history = [];
   trail   = [];
   toReset = RESET_NEED;
@@ -786,13 +784,14 @@ function startGame() {
 
   W = canvas.width  = window.innerWidth;
   H = canvas.height = window.innerHeight;
+  updateScale();
 
   px = W / 2; py = H / 2;
   trail    = [];
   history  = [];
   mimicOn  = false;
   mx = -9999; my = -9999;
-  lastTargetX = -9999; lastTargetY = -9999;
+  mIdx = 0; loopStartT = 0;
   score      = 0;
   toReset    = RESET_NEED;
   resetCount = 0;
@@ -844,47 +843,44 @@ function loop(ts) {
   px = Math.max(P_R, Math.min(W - P_R, px));
   py = Math.max(P_R, Math.min(H - P_R, py));
 
-  history.push({ x: px, y: py, t: ts });
+  // Only record waypoints when moving — no stationary gaps in path
+  if (mag > 0) history.push({ x: px, y: py });
   trail.push({ x: px, y: py });
   if (trail.length > 80) trail.shift();
 
-  // Mimic spawn countdown
+  // Spawn bar — elapsed real time since loop start
+  if (!loopStartT) loopStartT = ts;
   if (!mimicOn) {
-    const age = history.length > 0 ? ts - history[0].t : 0;
+    const age = ts - loopStartT;
     barFillEl.style.width = Math.min(age / spawnDelay * 100, 100) + '%';
-    if (age >= spawnDelay) {
+    if (age >= spawnDelay && history.length > 0) {
       mimicOn = true;
-      statusEl.textContent          = 'MIMIC ACTIVE';
-      barFillEl.style.width         = '100%';
-      collectHint.style.visibility  = 'visible';
+      statusEl.textContent         = 'MIMIC ACTIVE';
+      barFillEl.style.width        = '100%';
+      collectHint.style.visibility = 'visible';
     }
   }
 
-  // Mimic tracking + collision
+  // Mimic tracking — position-based cursor at M_SPEED (faster than player).
+  // Walks path waypoints; when exhausted closes in on player directly.
   if (mimicOn) {
-    const targetT = ts - mimicDelay;
-    let newTX = lastTargetX, newTY = lastTargetY;
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].t <= targetT) { newTX = history[i].x; newTY = history[i].y; break; }
-    }
-
-    if (Math.abs(newTX - lastTargetX) > 0.5 || Math.abs(newTY - lastTargetY) > 0.5) {
-      // Player was moving in history — follow exact path
-      mx = newTX; my = newTY;
+    if (mIdx < history.length) {
+      const tx = history[mIdx].x, ty = history[mIdx].y;
+      if (mx === -9999) { mx = tx; my = ty; }
+      const dx = tx - mx, dy = ty - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= M_SPEED) { mx = tx; my = ty; mIdx++; }
+      else { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
     } else {
-      // Player was stationary in history — keep closing in on current position
-      const ddx = px - mx, ddy = py - my;
-      const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-      if (dist > P_SPEED) { mx += (ddx / dist) * P_SPEED; my += (ddy / dist) * P_SPEED; }
-      else { mx = px; my = py; }
+      const dx = px - mx, dy = py - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.5) { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
     }
-    lastTargetX = newTX; lastTargetY = newTY;
-
+  }
+  if (mimicOn) {
     const cdx = px - mx, cdy = py - my;
     if (mx !== -9999 && Math.sqrt(cdx * cdx + cdy * cdy) < P_R + M_R - 2) {
-      draw(ts);
-      triggerDeath();
-      return;
+      draw(ts); triggerDeath(); return;
     }
   }
 
@@ -1016,6 +1012,7 @@ window.addEventListener('resize', () => {
   if (document.getElementById('game').classList.contains('active')) {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
+    updateScale();
   }
 });
 

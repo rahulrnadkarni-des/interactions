@@ -484,7 +484,7 @@ function updateScale() {
   const s  = vmin < 500 ? 0.55 : vmin < 768 ? 0.72 : 1;
   const gs = vmin < 500 ? 0.35 : vmin < 768 ? 0.65 : 1;
   P_R = Math.round(11 * s);
-  const mr = Math.min(resetCount, 9);
+  const mr = Math.min(resetCount, vmin < 500 ? 6 : 9);
   M_R = Math.round(11 * s + 1.5 * mr * (mr + 1) * gs);
   C_R = Math.max(2, Math.round(5 * s));
 }

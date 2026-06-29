@@ -1,48 +1,29 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ReactElement } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { useSpring, useMotionValueEvent } from 'framer-motion'
+import type { JoystickPosition } from '../../types/joystick'
+import './JoystickSVG.css'
 
-const SVG_UNITS_PER_PX = 164 / 200
+const SVG_WIDTH = 164
+const RENDER_WIDTH = 200
+const SVG_UNITS_PER_PX = SVG_WIDTH / RENDER_WIDTH
 const PIVOT_X          = 72.4706
 const PIVOT_Y          = 172.685
 const BALL_CY          = 54
 const ROD_LENGTH       = PIVOT_Y - BALL_CY
 const DRAG_RADIUS      = 30
-
-const STYLES = `
-  @keyframes rumble {
-    0%   { transform: translate(0, 0); }
-    15%  { transform: translate(-3px, 1px); }
-    30%  { transform: translate(3px, -1px); }
-    45%  { transform: translate(-2px, 2px); }
-    60%  { transform: translate(2px, -2px); }
-    75%  { transform: translate(-1px, 1px); }
-    90%  { transform: translate(1px, -1px); }
-    100% { transform: translate(0, 0); }
-  }
-  .jsk-rumbling { animation: rumble 0.3s ease-out; }
-`
+const THUMB_OFFSET_PX  = Math.round((SVG_WIDTH / 2 - PIVOT_X) / SVG_UNITS_PER_PX)
 
 interface JoystickProps {
-  onChange?: (pos: { x: number; y: number }) => void
+  onChange?: (pos: JoystickPosition) => void
 }
 
-export default function JoystickSVG({ onChange }: JoystickProps) {
-  const [snapBack, setSnapBack] = useState(false)
+export default function JoystickSVG({ onChange }: JoystickProps): ReactElement {
   const [rumbling, setRumbling] = useState(false)
-  const snapTimer         = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rumbleTimer       = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wasAboveThreshold = useRef(false)
 
-  // snap-back vibration + visual rumble
-  useEffect(() => {
-    if (!snapBack) return
-    if ('vibrate' in navigator) navigator.vibrate([40, 10, 40])
-    setRumbling(true)
-    if (rumbleTimer.current) clearTimeout(rumbleTimer.current)
-    rumbleTimer.current = setTimeout(() => setRumbling(false), 300)
-    return () => { if (rumbleTimer.current) clearTimeout(rumbleTimer.current) }
-  }, [snapBack])
+  useEffect(() => () => { if (rumbleTimer.current) clearTimeout(rumbleTimer.current) }, [])
 
   const springRotate    = useSpring(0, { stiffness: 280, damping: 22 })
   const springScaleY    = useSpring(1, { stiffness: 260, damping: 22 })
@@ -82,9 +63,10 @@ export default function JoystickSVG({ onChange }: JoystickProps) {
         springScaleY.set(1)
         springBallScale.set(1)
         wasAboveThreshold.current = false
-        setSnapBack(true)
-        if (snapTimer.current) clearTimeout(snapTimer.current)
-        snapTimer.current = setTimeout(() => setSnapBack(false), 50)
+        if ('vibrate' in navigator) navigator.vibrate([40, 10, 40])
+        setRumbling(true)
+        if (rumbleTimer.current) clearTimeout(rumbleTimer.current)
+        rumbleTimer.current = setTimeout(() => setRumbling(false), 300)
         onChange?.({ x: 0, y: 0 })
         return
       }
@@ -114,21 +96,15 @@ export default function JoystickSVG({ onChange }: JoystickProps) {
   )
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <style>{STYLES}</style>
+    <div className="jsk-outer">
       <div
         {...bind()}
-        style={{
-          touchAction: 'none',
-          userSelect: 'none',
-          cursor: 'grab',
-          display: 'inline-block',
-          transform: `translateX(${Math.round((164 / 2 - PIVOT_X) * 200 / 164)}px)`,
-        }}
+        className="jsk-drag"
+        style={{ transform: `translateX(${THUMB_OFFSET_PX}px)` }}
       >
         <svg
-          viewBox="0 0 164 232"
-          width={200}
+          viewBox={`0 0 ${SVG_WIDTH} 232`}
+          width={RENDER_WIDTH}
           height={283}
           overflow="visible"
           style={{ display: 'block' }}

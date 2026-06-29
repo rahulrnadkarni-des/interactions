@@ -1,11 +1,12 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, type ReactElement } from 'react'
 import JoystickSVG from '../components/joystick/JoystickSVG'
+import type { JoystickPosition } from '../types/joystick'
 import './ArcadeConsole.css'
 
-export default function ArcadeConsole() {
+export default function ArcadeConsole(): ReactElement {
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  const handleJoystick = useCallback(({ x, y }: { x: number; y: number }) => {
+  const handleJoystick = useCallback(({ x, y }: JoystickPosition) => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'JOYSTICK', x, y }, '*')
   }, [])
 
@@ -26,7 +27,7 @@ export default function ArcadeConsole() {
           ref={iframeRef}
           src="/games/mimic/index.html"
           title="MIMIC"
-          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+          className="console-iframe"
         />
       </div>
       <div className="console-panel">

@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>MIMIC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Monomaniac+One&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: linear-gradient(180deg, #004555 0%, #020609 100%);
+      font-family: 'Space Grotesk', sans-serif;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #004555 0%, #020609 100%);
+      z-index: 10;
+    }
+    .screen.active { display: flex; }
+
+    /* Pause is an overlay, not a full screen */
+    #pause {
+      position: fixed;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 9, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+    #pause.active { display: flex; }
+
+    /* ── Buttons ── */
+    .btn-fill, .btn-outline {
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: none;
+      outline: none;
+      transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .btn-fill   { background: #fff; color: #000; }
+    .btn-outline { background: transparent; color: #555; border: 1.5px solid #222; }
+    .btn-row { display: flex; gap: 12px; margin-top: 40px; }
+    .hidden { display: none !important; }
+
+    /* Joystick focus states */
+    .btn-fill.focused   { transform: scale(1.04); box-shadow: 0 0 28px rgba(255,255,255,0.22); }
+    .btn-outline.focused { transform: scale(1.04); border-color: rgba(255,255,255,0.6); color: #fff; }
+
+    /* ── Title screen ── */
+    #title .eyebrow {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    #title h1 {
+      font-size: clamp(72px, 14vw, 120px);
+      font-weight: 700;
+      letter-spacing: -6px;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    #title .subtitle {
+      font-size: 14px;
+      color: #555;
+      font-weight: 300;
+      max-width: 340px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    #title .footer-hint {
+      position: fixed;
+      bottom: 24px;
+      font-size: 10px;
+      color: #2A2A2A;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* ── Controls tutorial ── */
+    #controls-tutorial .eyebrow {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    #controls-tutorial h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin: 0 0 48px;
+    }
+    .ctrl-demo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+    }
+    .ctrl-btns {
+      display: flex;
+      gap: 12px;
+    }
+    .ctrl-btn {
+      padding: 13px 22px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 10px;
+      border: 1.5px solid #222;
+      background: transparent;
+      color: #2a2a2a;
+    }
+    .ctrl-btn-l { animation: ctrl-left-btn 7s ease-in-out infinite; }
+    .ctrl-btn-r { animation: ctrl-right-btn 7s ease-in-out infinite; }
+
+    .ctrl-joy-outer {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ctrl-joy {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #0e0e0e;
+      border: 1.5px solid #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .ctrl-thumb {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      animation: ctrl-thumb 7s ease-in-out infinite;
+    }
+    .ctrl-arr {
+      position: absolute;
+      font-size: 13px;
+      color: #1e1e1e;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .ctrl-arr-l { left: 4px; top: 50%; transform: translateY(-50%); animation: ctrl-arr-l 7s ease-in-out infinite; }
+    .ctrl-arr-r { right: 4px; top: 50%; transform: translateY(-50%); animation: ctrl-arr-r 7s ease-in-out infinite; }
+    .ctrl-arr-d { bottom: 4px; left: 50%; transform: translateX(-50%); animation: ctrl-arr-d 7s ease-in-out infinite; }
+
+    .ctrl-labels {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .ctrl-lbl-select,
+    .ctrl-lbl-confirm {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #222;
+    }
+    .ctrl-lbl-select  { animation: ctrl-hint-select  7s ease-in-out infinite; }
+    .ctrl-lbl-confirm { animation: ctrl-hint-confirm 7s ease-in-out infinite; }
+
+    /* 7s loop:
+       0-0.7s  (0-10%):   neutral
+       0.7-2.1s (10-30%): joystick left → left btn focused
+       2.1-2.8s (30-40%): return center
+       2.8-4.2s (40-60%): joystick right → right btn focused
+       4.2-4.9s (60-70%): return center (right still focused briefly)
+       4.9-6.0s (70-86%): joystick down → right btn confirms
+       6.0-7.0s (86-100%): reset
+    */
+    @keyframes ctrl-thumb {
+      0%, 8%           { transform: translate(0, 0); }
+      15%, 28%         { transform: translate(-22px, 0); }
+      38%, 42%         { transform: translate(0, 0); }
+      48%, 58%         { transform: translate(22px, 0); }
+      65%, 68%         { transform: translate(0, 0); }
+      74%, 84%         { transform: translate(0, 22px); }
+      92%, 100%        { transform: translate(0, 0); }
+    }
+    @keyframes ctrl-left-btn {
+      0%, 12%          { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
+      18%, 26%         { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); }
+      36%, 100%        { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
+    }
+    @keyframes ctrl-right-btn {
+      0%, 44%                  { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
+      50%, 68%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      76%, 82%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      85%                      { color: #000; border-color: #fff; transform: scale(1.08); box-shadow: 0 0 32px rgba(255,255,255,0.3); background: #fff; }
+      93%, 100%                { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
+    }
+    @keyframes ctrl-arr-l {
+      0%, 12%          { color: #1e1e1e; }
+      18%, 28%         { color: #888; }
+      36%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-arr-r {
+      0%, 44%          { color: #1e1e1e; }
+      50%, 68%         { color: #888; }
+      74%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-arr-d {
+      0%, 68%          { color: #1e1e1e; }
+      74%, 84%         { color: #888; }
+      92%, 100%        { color: #1e1e1e; }
+    }
+    @keyframes ctrl-hint-select {
+      0%, 10%          { color: #222; }
+      15%, 62%         { color: #555; }
+      70%, 100%        { color: #222; }
+    }
+    @keyframes ctrl-hint-confirm {
+      0%, 68%          { color: #222; }
+      74%, 86%         { color: #555; }
+      93%, 100%        { color: #222; }
+    }
+
+    /* ── How to play ── */
+    #howto .eyebrow {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    .how-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      width: min(380px, 90vw);
+    }
+    .how-card {
+      background: #0e0e0e;
+      border: 1px solid #141414;
+      padding: 20px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .how-card:first-child { border-radius: 8px 8px 0 0; }
+    .how-card:last-child  { border-radius: 0 0 8px 8px; }
+    .how-card .num {
+      font-size: 11px;
+      font-weight: 700;
+      color: #FF2D2D;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .how-card .card-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .how-card .card-desc {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.55;
+    }
+
+    /* ── Game screen ── */
+    #game {
+      position: fixed;
+      inset: 0;
+      display: none;
+    }
+    #game.active { display: block; }
+
+    #c {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 20px 20px 0;
+      gap: 28px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .hud-block { line-height: 1.2; }
+    .hud-block.right { text-align: right; }
+    .hud-label {
+      display: block;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 4px;
+    }
+    .hud-val {
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      color: #fff;
+    }
+
+    #repel-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding-top: 2px;
+    }
+    .repel-label {
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.5);
+    }
+    .repel-pips { display: flex; gap: 6px; }
+    .pip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      mix-blend-mode: color-dodge;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pip::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+    }
+    .pip.lit::after { background: #C2FFC6; }
+
+    /* ── Countdown overlay ── */
+    #countdown {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: none;
+      background: rgba(7,7,7,0.55);
+    }
+    #countdown.hidden { display: none !important; }
+    #countdown-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(80px, 18vw, 140px);
+      font-weight: 700;
+      letter-spacing: -4px;
+      color: #fff;
+    }
+
+    /* ── Bottom bar ── */
+    #bottom-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 20px;
+      gap: 10px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    #status-label {
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: #fff;
+    }
+    #spawn-bar-track {
+      width: 100px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    #spawn-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #FF7CAE;
+      border-radius: 100px;
+    }
+
+    /* ── Virtual joystick ── */
+    #joystick-wrap {
+      position: absolute;
+      bottom: 36px;
+      left: 36px;
+      width: 120px;
+      height: 120px;
+      z-index: 5;
+      touch-action: none;
+    }
+    #joystick-base {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 1.5px solid #1E1E1E;
+      background: rgba(255, 255, 255, 0.02);
+      position: relative;
+    }
+    #joystick-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* ── Pause overlay ── */
+    #pause h2 {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -3px;
+    }
+    #pause-score-row {
+      font-size: 12px;
+      color: #333;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 16px;
+    }
+
+    /* ── Game over ── */
+    #gameover h2 {
+      font-size: clamp(56px, 12vw, 96px);
+      font-weight: 700;
+      letter-spacing: -4px;
+      color: #FF2D2D;
+      line-height: 1;
+    }
+    #go-wave {
+      font-size: 11px;
+      color: #FF2D2D;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 12px;
+    }
+    .go-scores {
+      display: flex;
+      gap: 48px;
+      margin-top: 32px;
+    }
+    .go-score-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .go-score-label {
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .go-score-val {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ CONTROLS TUTORIAL ════════════════════════════════════ -->
+<div id="controls-tutorial" class="screen">
+  <p class="eyebrow">Before you begin</p>
+  <h2>Controls</h2>
+  <div class="ctrl-demo">
+    <div class="ctrl-btns">
+      <div class="ctrl-btn ctrl-btn-l">Option A</div>
+      <div class="ctrl-btn ctrl-btn-r">Option B</div>
+    </div>
+    <div class="ctrl-joy-outer">
+      <div class="ctrl-joy">
+        <div class="ctrl-thumb"></div>
+      </div>
+      <div class="ctrl-arr ctrl-arr-l">←</div>
+      <div class="ctrl-arr ctrl-arr-r">→</div>
+      <div class="ctrl-arr ctrl-arr-d">↓</div>
+    </div>
+    <div class="ctrl-labels">
+      <span class="ctrl-lbl-select">Push left or right to select</span>
+      <span class="ctrl-lbl-confirm">Push down to confirm</span>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill" id="ctrl-got-it">Got it</button>
+  </div>
+</div>
+
+<!-- ═══ TITLE ═══════════════════════════════════════════════ -->
+<div id="title" class="screen">
+  <p class="eyebrow">A SINGLE MECHANIC GAME</p>
+  <h1>MIMIC</h1>
+  <p class="subtitle">Your past is hunting you. Move smart — it remembers everything.</p>
+  <div class="btn-row">
+    <button class="btn-fill" id="title-play">PLAY</button>
+    <button class="btn-outline hidden" id="title-howto">HOW IT WORKS</button>
+  </div>
+  <p class="footer-hint">JOYSTICK ONLY</p>
+</div>
+
+<!-- ═══ HOW TO PLAY ══════════════════════════════════════════ -->
+<div id="howto" class="screen">
+  <p class="eyebrow">HOW IT WORKS</p>
+  <div class="how-cards">
+    <div class="how-card">
+      <span class="num">01</span>
+      <div>
+        <div class="card-title">Move and collect</div>
+        <div class="card-desc">Navigate the arena. Collect every glowing orb you can find.</div>
+      </div>
+    </div>
+    <div class="how-card">
+      <span class="num">02</span>
+      <div>
+        <div class="card-title">Your past hunts you</div>
+        <div class="card-desc">After 5 seconds, a mimic appears — tracing your exact path, closing in.</div>
+      </div>
+    </div>
+    <div class="how-card">
+      <span class="num">03</span>
+      <div>
+        <div class="card-title">Reset. But it remembers.</div>
+        <div class="card-desc">Collect enough to reset it. Every reset it comes back faster. There is no escape — only delay.</div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill">START</button>
+    <button class="btn-outline">BACK</button>
+  </div>
+</div>
+
+<!-- ═══ GAME ═════════════════════════════════════════════════ -->
+<div id="game">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-label">Your score</span>
+      <span class="hud-val" id="score-val">0</span>
+    </div>
+    <div id="repel-wrap">
+      <span class="repel-label">Repel</span>
+      <div class="repel-pips" id="pips"></div>
+    </div>
+    <div class="hud-block right">
+      <span class="hud-label">Best score</span>
+      <span class="hud-val" id="best-val">0</span>
+    </div>
+  </div>
+
+  <div id="bottom-bar">
+    <span id="status-label">Mimic spawning in...</span>
+    <div id="spawn-bar-track">
+      <div id="spawn-bar-fill"></div>
+    </div>
+  </div>
+
+  <div id="joystick-wrap">
+    <div id="joystick-base">
+      <div id="joystick-thumb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAUSE ════════════════════════════════════════════════ -->
+<div id="pause">
+  <h2>PAUSED</h2>
+  <p id="pause-score-row">SCORE: <span id="pause-score">0</span></p>
+  <div class="btn-row">
+    <button class="btn-fill">RESUME</button>
+    <button class="btn-outline">QUIT</button>
+  </div>
+</div>
+
+<!-- ═══ COUNTDOWN ════════════════════════════════════════════ -->
+<div id="countdown" class="hidden">
+  <span id="countdown-num"></span>
+</div>
+
+<!-- ═══ GAME OVER ════════════════════════════════════════════ -->
+<div id="gameover" class="screen">
+  <h2>CAUGHT.</h2>
+  <p id="go-wave">WAVE 1</p>
+  <div class="go-scores">
+    <div class="go-score-block">
+      <span class="go-score-label">SCORE</span>
+      <span class="go-score-val" id="go-score">0</span>
+    </div>
+    <div class="go-score-block">
+      <span class="go-score-label">BEST</span>
+      <span class="go-score-val" id="go-best" style="color:#555">0</span>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-fill">TRY AGAIN</button>
+    <button class="btn-outline">MENU</button>
+  </div>
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────
+const P_SPEED         = 2.8;
+const M_SPEED         = P_SPEED * 1.15;
+let P_R               = 11;
+let M_R               = 11;
+let C_R               = 5;
+
+function updateScale() {
+  const vmin = Math.min(W, H);
+  const s  = vmin < 500 ? 0.55 : vmin < 768 ? 0.72 : 1;
+  const gs = vmin < 500 ? 0.35 : vmin < 768 ? 0.65 : 1;
+  P_R = Math.round(11 * s);
+  const mr = Math.min(resetCount, vmin < 500 ? 6 : 9);
+  M_R = Math.round(11 * s + 1.5 * mr * (mr + 1) * gs);
+  C_R = Math.max(2, Math.round(5 * s));
+}
+const N_COL           = 14;
+const RESET_NEED      = 6;
+const MAX_PIPS        = 8;
+const JOY_R           = 38;
+
+// ── DOM ──────────────────────────────────────────────────────────
+const canvas      = document.getElementById('c');
+const ctx         = canvas.getContext('2d');
+
+// Player SVG paths — parsed once, drawn each frame
+const P_BODY_OUTER = new Path2D('M51.1576 30.0328C51.1576 33.3835 50.9347 42.6208 48.2105 44.9237C45.734 46.4997 44.0598 44.012 40.9078 44.012C37.3056 44.012 37.1786 45.6742 33.8015 45.6742C30.4244 45.6742 29.5809 44.012 26.654 44.012C23.7272 44.012 23.1449 45.6742 19.9929 44.3984C16.6189 42.0258 17.2258 33.8154 17.2258 30.0328C17.2258 26.5027 18.4335 23.1042 21.4219 20.7641C24.5025 18.3518 29.4355 18.0308 34.1917 18.0308C38.8168 18.0308 43.9521 19.0376 47.0125 21.3339C50.1523 23.6897 51.1576 26.4024 51.1576 30.0328Z');
+const P_BODY_INNER = new Path2D('M48.3837 30.0397C48.3837 32.8425 47.9106 35.9367 45.6319 37.8631C43.035 40.0584 38.3665 40.1494 34.1919 40.1494C30.4893 40.1494 25.6221 39.64 23.0952 37.8631C20.2729 35.8784 20 33.2037 20 30.0397C20 27.0867 21.0102 24.2439 23.51 22.2865C26.0868 20.2686 30.2133 20 34.1919 20C38.0607 20 42.3564 20.8422 44.9164 22.7631C47.5428 24.7337 48.3837 27.0028 48.3837 30.0397Z');
+// Mimic SVG paths — parsed once, drawn each frame
+const M_BODY_OUTER = new Path2D('M34.1921 18.0312C38.817 18.0313 43.952 19.0378 47.0124 21.334C47.2286 21.4962 47.5384 21.4718 47.7063 21.2599C48.0276 20.8543 48.3247 20.4361 48.5407 20.1191C48.651 19.9573 48.9052 20.0288 48.9069 20.2246C48.9124 20.8351 48.8972 21.7936 48.7902 22.6889C48.7728 22.835 48.8177 22.9818 48.9132 23.0937C50.5747 25.0404 51.1579 27.2709 51.1579 30.0332C51.1579 33.3842 50.9347 42.621 48.2106 44.9238C45.7341 46.4998 44.0599 44.0117 40.9079 44.0117C37.3057 44.0117 37.1786 45.6738 33.8015 45.6738C30.4245 45.6738 29.5808 44.0117 26.654 44.0117C23.7442 44.0118 23.1516 45.655 20.0475 44.4203C20.0121 44.4063 19.9771 44.3876 19.9463 44.3652C16.6247 41.9501 17.2262 33.7984 17.2263 30.0332C17.2263 27.4115 17.8928 24.8627 19.4598 22.7658C19.5437 22.6535 19.5796 22.5122 19.5595 22.3734C19.4191 21.4047 19.3989 20.3076 19.405 19.6338C19.4067 19.438 19.6609 19.3665 19.7712 19.5283C20.0006 19.8649 20.3212 20.3154 20.6653 20.7437C20.8379 20.9585 21.1522 20.9784 21.3679 20.807C21.3857 20.7928 21.4036 20.7787 21.4216 20.7646C24.5022 18.3523 29.4359 18.0312 34.1921 18.0312Z');
+const M_EYE_LEFT  = new Path2D('M20.9917 25.854C20.7807 26.6817 20.7348 27.5428 20.8566 28.3882C20.9784 29.2336 21.2656 30.0468 21.7017 30.7812C22.1377 31.5157 22.7142 32.157 23.3981 32.6687C24.082 33.1803 24.8601 33.5523 25.6877 33.7632C26.5154 33.9742 27.3765 34.0201 28.2219 33.8983C29.0673 33.7765 29.8805 33.4893 30.6149 33.0533C31.3494 32.6172 31.9907 32.0407 32.5024 31.3568C33.014 30.6729 33.386 29.8949 33.5969 29.0672L27.2943 27.4606L20.9917 25.854Z');
+const M_EYE_RIGHT = new Path2D('M47.3924 25.7012C47.6033 26.5289 47.6492 27.39 47.5274 28.2354C47.4056 29.0808 47.1184 29.894 46.6824 30.6284C46.2463 31.3628 45.6699 32.0042 44.9859 32.5158C44.302 33.0275 43.524 33.3994 42.6963 33.6104C41.8686 33.8214 41.0075 33.8673 40.1621 33.7455C39.3167 33.6236 38.5036 33.3365 37.7691 32.9004C37.0347 32.4644 36.3933 31.8879 35.8817 31.204C35.37 30.52 34.9981 29.742 34.7871 28.9144L41.0897 27.3078L47.3924 25.7012Z');
+const M9_BODY_OUTER = new Path2D('M35.8824 34.5566C35.907 34.3734 36.1523 34.3358 36.2369 34.4999C36.5731 35.1554 37.172 36.2445 37.7057 36.8085C38.2612 37.3955 39.1447 37.8193 39.5036 37.9762C39.6059 38.021 39.7207 38.023 39.8263 37.9868L39.8849 37.9667C39.917 37.9557 39.9477 37.9413 39.9768 37.9238C42.8964 36.1738 47.1114 35.9238 51.1891 35.9238C55.1237 35.9238 59.4492 36.6957 62.3819 38.4335C62.5235 38.5175 62.6979 38.5273 62.8421 38.4477C63.2392 38.2286 63.9674 37.7808 64.4244 37.2216C64.9158 36.6204 65.4345 35.4915 65.7223 34.8134C65.7948 34.6437 66.0419 34.6629 66.0797 34.8437C66.2517 35.6678 66.5229 37.1871 66.444 38.2578C66.365 39.3281 65.8834 40.2505 65.5676 40.7515C65.456 40.9286 65.4598 41.1569 65.581 41.3277C66.7803 43.0181 67.2154 44.9409 67.2154 47.2607C67.2154 50.4259 67.0044 59.1508 64.4313 61.3261C62.0921 62.8146 60.5109 60.465 57.5338 60.4648C54.1311 60.4648 54.0109 62.0351 50.8209 62.0351C47.6309 62.0351 46.8336 60.4648 44.069 60.4648C41.3207 60.465 40.7606 62.0169 37.8286 60.8507C37.7951 60.8374 37.7621 60.8197 37.733 60.7986C34.5956 58.517 35.1637 50.8171 35.1637 47.2607C35.1637 45.0332 35.6725 42.861 36.852 41.0054C36.9664 40.8254 36.9547 40.5923 36.8279 40.4209C36.4769 39.9463 35.9235 39.0562 35.7662 37.9872C35.61 36.9253 35.7706 35.3911 35.8824 34.5566Z');
+const scoreValEl  = document.getElementById('score-val');
+const bestValEl   = document.getElementById('best-val');
+const statusEl    = document.getElementById('status-label');
+const barFillEl   = document.getElementById('spawn-bar-fill');
+const pipsEl      = document.getElementById('pips');
+const goScoreEl   = document.getElementById('go-score');
+const goBestEl    = document.getElementById('go-best');
+const goWaveEl    = document.getElementById('go-wave');
+const pauseScoreEl = document.getElementById('pause-score');
+const jWrap        = document.getElementById('joystick-wrap');
+const jThumb      = document.getElementById('joystick-thumb');
+
+// ── State ────────────────────────────────────────────────────────
+let W, H;
+let px, py;
+let trail    = [];
+let history  = [];
+let cols     = [];
+let mx = -9999, my = -9999, mimicOn = false;
+let mIdx = 0;
+let mimicLookX = 0, mimicLookY = 0;
+let loopStartT = 0;
+let score    = 0;
+let best     = 0;
+let toReset, resetCount, spawnDelay;
+let keys     = {};
+let raf      = null;
+let isPaused = false;
+let isDead   = false;
+let flashColor = null, flashEnd = 0;
+let repelWave  = null;
+let mimicEndX  = -9999, mimicEndY = -9999, mimicHideAt = 0;
+
+// ── Menu navigation state ────────────────────────────────────────
+let menuFocus      = 0;
+let menuNavLock    = false;
+let requireJoyRelease = false;
+let menuRaf        = null;
+const NAV_LOCK_MS  = 350;
+const NAV_THRESH   = 0.85;
+
+// Per-screen button actions [left/0, right/1]
+const SCREEN_ACTIONS = {
+  'controls-tutorial': [() => { localStorage.setItem('mimic_seen_controls', '1'); goTo('title'); }],
+  howto:    [() => startGame(),      () => goTo('title')],
+  pause:    [() => togglePause(),    () => quitToTitle()],
+  gameover: [() => startGame(),      () => goTo('title')],
+};
+
+function getTitleActions() {
+  if (localStorage.getItem('mimic_seen_howto') === '1') {
+    return [() => startGame(), () => goTo('howto')];
+  } else {
+    return [() => { markHowtoSeen(); goTo('howto'); }];
+  }
+}
+
+function markHowtoSeen() {
+  localStorage.setItem('mimic_seen_howto', '1');
+  document.getElementById('title-howto').classList.remove('hidden');
+}
+
+function getActiveMenuScreen() {
+  if (document.getElementById('pause').classList.contains('active')) return 'pause';
+  for (const id of SCREEN_IDS) {
+    if (document.getElementById(id).classList.contains('active')) return id;
+  }
+  return null;
+}
+
+function visibleBtns(screenId) {
+  return [...document.getElementById(screenId).querySelectorAll('.btn-fill, .btn-outline')]
+    .filter(b => !b.classList.contains('hidden'));
+}
+
+function refreshFocus(screenId) {
+  const el = document.getElementById(screenId);
+  if (!el) return;
+  let vi = 0;
+  el.querySelectorAll('.btn-fill, .btn-outline').forEach(b => {
+    if (b.classList.contains('hidden')) {
+      b.classList.remove('focused');
+    } else {
+      b.classList.toggle('focused', vi === menuFocus);
+      vi++;
+    }
+  });
+}
+
+function processMenuJoy() {
+  const screenId = getActiveMenuScreen();
+  if (!screenId) { stopMenuLoop(); return; }
+  if (menuNavLock) return;
+  if (requireJoyRelease) {
+    if (Math.sqrt(joy.nx ** 2 + joy.ny ** 2) < 0.2) requireJoyRelease = false;
+    return;
+  }
+
+  const count = visibleBtns(screenId).length;
+  if (menuFocus >= count) menuFocus = count - 1;
+
+  let targetIdx = menuFocus;
+  let triggered = false;
+
+  if (joy.nx < -NAV_THRESH)            { targetIdx = 0;                    triggered = true; }
+  else if (joy.nx > NAV_THRESH)        { targetIdx = Math.min(1, count-1); triggered = true; }
+  else if (joy.ny > NAV_THRESH)        {                                    triggered = true; }
+
+  if (triggered) {
+    menuFocus = targetIdx;
+    refreshFocus(screenId);
+    menuNavLock = true;
+    setTimeout(() => { menuNavLock = false; }, NAV_LOCK_MS);
+    stopMenuLoop();
+    const actions = screenId === 'title' ? getTitleActions() : SCREEN_ACTIONS[screenId];
+    actions?.[menuFocus]?.();
+  }
+}
+
+function menuLoop() {
+  processMenuJoy();
+  if (getActiveMenuScreen()) menuRaf = requestAnimationFrame(menuLoop);
+  else menuRaf = null;
+}
+
+function startMenuLoop() {
+  if (!menuRaf) menuRaf = requestAnimationFrame(menuLoop);
+}
+
+function stopMenuLoop() {
+  if (menuRaf) { cancelAnimationFrame(menuRaf); menuRaf = null; }
+}
+
+// ── Screen router ────────────────────────────────────────────────
+const SCREEN_IDS = ['controls-tutorial', 'title', 'howto', 'gameover'];
+
+function goTo(name) {
+  SCREEN_IDS.forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('pause').classList.remove('active');
+  document.getElementById('game').classList.remove('active');
+  document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused'));
+
+  if (name === 'game') {
+    document.getElementById('game').classList.add('active');
+    stopMenuLoop();
+  } else {
+    document.getElementById(name).classList.add('active');
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    isPaused = false;
+    isDead   = false;
+    menuFocus = 0;
+    refreshFocus(name);
+    requireJoyRelease = true;
+    startMenuLoop();
+  }
+}
+
+function quitToTitle() {
+  isPaused = false;
+  goTo('title');
+}
+
+// ── Pip display ───────────────────────────────────────────────────
+function buildPips() {
+  pipsEl.innerHTML = '';
+  const filled = RESET_NEED - toReset;
+  for (let i = 0; i < RESET_NEED; i++) {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i < filled ? ' lit' : '');
+    pipsEl.appendChild(p);
+  }
+}
+
+// ── Virtual joystick ─────────────────────────────────────────────
+const joy = { nx: 0, ny: 0, dragging: false, _active: false, _bx: 0, _by: 0 };
+
+function joyStart(cx, cy) {
+  const r = jWrap.getBoundingClientRect();
+  joy._bx = r.left + r.width  / 2;
+  joy._by = r.top  + r.height / 2;
+  joy._active  = true;
+  joy.dragging = true;
+  joyMove(cx, cy);
+}
+function joyMove(cx, cy) {
+  if (!joy._active) return;
+  let dx = cx - joy._bx, dy = cy - joy._by;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d > JOY_R) { dx = dx / d * JOY_R; dy = dy / d * JOY_R; }
+  joy.nx = dx / JOY_R;
+  joy.ny = dy / JOY_R;
+  jThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
+function joyEnd() {
+  joy._active  = false;
+  joy.dragging = false;
+  joy.nx = 0; joy.ny = 0;
+  jThumb.style.transform = 'translate(-50%, -50%)';
+}
+
+jWrap.addEventListener('mousedown',  e => { e.preventDefault(); joyStart(e.clientX, e.clientY); });
+window.addEventListener('mousemove', e => { if (joy._active) joyMove(e.clientX, e.clientY); });
+window.addEventListener('mouseup',   ()  => joyEnd());
+jWrap.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; joyStart(t.clientX, t.clientY); }, { passive: false });
+window.addEventListener('touchmove', e => { if (joy._active) { const t = e.touches[0]; joyMove(t.clientX, t.clientY); } }, { passive: true });
+window.addEventListener('touchend',  ()  => joyEnd());
+
+// ── Spawn collectibles ────────────────────────────────────────────
+function spawnCols() {
+  const list = [];
+  for (let i = 0; i < N_COL; i++) {
+    let x, y, n = 0;
+    do {
+      x = 80 + Math.random() * (W - 160);
+      y = 80 + Math.random() * (H - 160);
+      n++;
+    } while (n < 20 && x < 200 && y > H - 200);
+    list.push({ x, y, alive: true, pulse: Math.random() * Math.PI * 2 });
+  }
+  return list;
+}
+
+// ── Reset mimic ───────────────────────────────────────────────────
+function resetMimic() {
+  resetCount++;
+  updateScale();
+  const dist = mx !== -9999 ? Math.sqrt((px - mx) ** 2 + (py - my) ** 2) : 0;
+  repelWave  = { x: px, y: py, startT: performance.now(), tx: mx, ty: my };
+  mimicEndX  = mx; mimicEndY = my;
+  mimicHideAt = performance.now() + Math.max(100, dist / 700 * 1000) + 80;
+  mimicOn = false;
+  mx = -9999; my = -9999;
+  mIdx = 0; loopStartT = 0;
+  mimicLookX = 0; mimicLookY = 0;
+  history = [];
+  trail   = [];
+  toReset = RESET_NEED;
+  spawnDelay = Math.max(2000, 5000 - resetCount * 500);
+
+  buildPips();
+  statusEl.textContent       = 'Mimic spawning in...';
+  barFillEl.style.background = '#FF7CAE';
+  barFillEl.style.width      = '0%';
+
+  flashColor = 'rgba(255,255,255,0.06)';
+  flashEnd   = performance.now() + 120;
+}
+
+// ── Trigger death ─────────────────────────────────────────────────
+function triggerDeath() {
+  isDead = true;
+  const newBest = score > best;
+  if (newBest) best = score;
+
+  flashColor = 'rgba(255,45,45,0.22)';
+  flashEnd   = performance.now() + 200;
+
+  goScoreEl.textContent = score;
+  goBestEl.textContent  = best;
+  goWaveEl.textContent  = 'WAVE ' + (resetCount + 1);
+  goBestEl.style.color  = newBest ? '#fff' : '#555';
+
+  setTimeout(() => { goTo('gameover'); }, 280);
+}
+
+// ── Countdown (3 2 1 GO) ──────────────────────────────────────────
+function runCountdown(callback) {
+  const el   = document.getElementById('countdown');
+  const num  = document.getElementById('countdown-num');
+  const steps = ['3', '2', '1', 'GO'];
+  let i = 0;
+  el.classList.remove('hidden');
+  function tick() {
+    num.textContent = steps[i++];
+    const isGo = steps[i - 1] === 'GO';
+    setTimeout(() => {
+      if (isGo) { el.classList.add('hidden'); callback(); }
+      else tick();
+    }, isGo ? 600 : 900);
+  }
+  tick();
+}
+
+// ── Start / restart game ──────────────────────────────────────────
+function startGame() {
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  resetCount = 0;
+  updateScale();
+
+  px = W / 2; py = H / 2;
+  trail    = [];
+  history  = [];
+  mimicOn  = false;
+  mx = -9999; my = -9999;
+  mIdx = 0; loopStartT = 0;
+  mimicLookX = 0; mimicLookY = 0;
+  score      = 0;
+  toReset    = RESET_NEED;
+  spawnDelay = 5000;
+  isPaused   = false;
+  isDead     = false;
+  flashColor  = null;
+  flashEnd    = 0;
+  repelWave   = null;
+  mimicEndX   = -9999; mimicEndY = -9999; mimicHideAt = 0;
+
+  cols = spawnCols();
+  buildPips();
+
+  scoreValEl.textContent        = '0';
+  bestValEl.textContent         = best;
+  statusEl.textContent          = 'Mimic spawning in...';
+  barFillEl.style.width         = '0%';
+  barFillEl.style.background    = '#FF7CAE';
+
+  goTo('game');
+  runCountdown(() => { raf = requestAnimationFrame(loop); });
+}
+
+// ── Game loop ─────────────────────────────────────────────────────
+function loop(ts) {
+  if (isDead) return;
+  raf = requestAnimationFrame(loop);
+
+  if (isPaused) return;
+
+  // Input
+  let dx = 0, dy = 0;
+  if (joy.dragging) {
+    dx = joy.nx; dy = joy.ny;
+  } else {
+    if (keys['ArrowLeft']  || keys['a'] || keys['A']) dx -= 1;
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) dx += 1;
+    if (keys['ArrowUp']    || keys['w'] || keys['W']) dy -= 1;
+    if (keys['ArrowDown']  || keys['s'] || keys['S']) dy += 1;
+  }
+
+  const mag = Math.sqrt(dx * dx + dy * dy);
+  if (mag > 0) {
+    px += (dx / mag) * P_SPEED;
+    py += (dy / mag) * P_SPEED;
+  }
+  px = Math.max(P_R, Math.min(W - P_R, px));
+  py = Math.max(P_R, Math.min(H - P_R, py));
+
+  // Only record waypoints when moving — no stationary gaps in path
+  if (mag > 0) history.push({ x: px, y: py });
+  trail.push({ x: px, y: py });
+  if (trail.length > 80) trail.shift();
+
+  // Spawn bar — elapsed real time since loop start
+  if (!loopStartT) loopStartT = ts;
+  if (!mimicOn) {
+    const age = ts - loopStartT;
+    barFillEl.style.width = Math.min(age / spawnDelay * 100, 100) + '%';
+    if (age >= spawnDelay) {
+      mimicOn = true;
+      statusEl.textContent  = 'Mimic active';
+      barFillEl.style.width = '100%';
+    }
+  }
+
+  // Mimic tracking — position-based cursor at M_SPEED (faster than player).
+  // Walks path waypoints; when exhausted closes in on player directly.
+  if (mimicOn) {
+    if (mIdx < history.length) {
+      const tx = history[mIdx].x, ty = history[mIdx].y;
+      if (mx === -9999) { mx = tx; my = ty; }
+      const dx = tx - mx, dy = ty - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) { mimicLookX = dx / dist; mimicLookY = dy / dist; }
+      if (dist <= M_SPEED) { mx = tx; my = ty; mIdx++; }
+      else { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
+    } else {
+      if (mx === -9999) {
+        if (history.length === 0) {
+          // Player hasn't moved yet — spawn at opposite corner to avoid instant collision
+          mx = px < W / 2 ? W - M_R : M_R;
+          my = py < H / 2 ? H - M_R : M_R;
+        } else {
+          mx = px; my = py;
+        }
+      }
+      const dx = px - mx, dy = py - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0.5) { mimicLookX = dx / dist; mimicLookY = dy / dist; mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
+    }
+  }
+  if (mimicOn) {
+    const cdx = px - mx, cdy = py - my;
+    if (mx !== -9999 && Math.sqrt(cdx * cdx + cdy * cdy) < P_R + M_R - 2) {
+      draw(); triggerDeath(); return;
+    }
+  }
+
+  // Collect orbs
+  let allDead = true;
+  for (const c of cols) {
+    if (!c.alive) continue;
+    allDead = false;
+    const cdx = px - c.x, cdy = py - c.y;
+    if (Math.sqrt(cdx * cdx + cdy * cdy) < P_R + C_R) {
+      c.alive = false;
+      score++;
+      toReset--;
+      scoreValEl.textContent = score;
+      buildPips();
+      if (toReset <= 0) resetMimic();
+    }
+  }
+  if (allDead) cols = spawnCols();
+
+  draw();
+}
+
+// ── Draw ──────────────────────────────────────────────────────────
+function draw() {
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#004555');
+  bgGrad.addColorStop(1, '#020609');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Trail
+  for (let i = 0; i < trail.length; i++) {
+    const alpha = (i / trail.length) * 0.11;
+    ctx.beginPath();
+    ctx.arc(trail[i].x, trail[i].y, P_R * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+    ctx.fill();
+  }
+
+  // Orbs
+  for (const c of cols) {
+    if (!c.alive) continue;
+    c.pulse += 0.05;
+    const s    = 1 + Math.sin(c.pulse) * 0.18;
+    const gr   = C_R * 4 * s;
+    const g    = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, gr);
+    g.addColorStop(0, 'rgba(194,255,198,0.22)');
+    g.addColorStop(1, 'rgba(194,255,198,0)');
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, gr, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+    const half = C_R * s * 0.8;
+    const cr   = Math.max(1, half * 0.18);
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Math.PI / 4);
+    ctx.beginPath();
+    ctx.moveTo(-half + cr, -half);
+    ctx.lineTo( half - cr, -half);
+    ctx.arcTo( half, -half,  half, -half + cr, cr);
+    ctx.lineTo( half,  half - cr);
+    ctx.arcTo( half,  half,  half - cr,  half, cr);
+    ctx.lineTo(-half + cr,  half);
+    ctx.arcTo(-half,  half, -half,  half - cr, cr);
+    ctx.lineTo(-half, -half + cr);
+    ctx.arcTo(-half, -half, -half + cr, -half, cr);
+    ctx.closePath();
+    ctx.fillStyle = '#C2FFC6';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Mimic character — stays visible until repel ring reaches it
+  {
+    const now = performance.now();
+    const _mx = (mimicOn && mx !== -9999) ? mx
+              : (!mimicOn && now < mimicHideAt && mimicEndX !== -9999) ? mimicEndX
+              : -9999;
+    const _my = (mimicOn && my !== -9999) ? my
+              : (!mimicOn && now < mimicHideAt && mimicEndY !== -9999) ? mimicEndY
+              : -9999;
+
+  if (_mx !== -9999) {
+    const SVG_CX = 34.19, SVG_CY = 30.08;
+    const scale  = M_R / 14.19;
+
+    // Threat glow — shifts from soft pink to angry red as intensity rises
+    const t           = Math.min(resetCount / MAX_PIPS, 1);
+    const glowG       = (112 - 77 * t) | 0;
+    const glowB       = (169 - 101 * t) | 0;
+    const glowA       = (0.25 + t * 0.2).toFixed(2);
+    const glowRadius  = M_R * (3.5 + t * 2);
+    const mg = ctx.createRadialGradient(_mx, _my, 0, _mx, _my, glowRadius);
+    mg.addColorStop(0, `rgba(255,${glowG},${glowB},${glowA})`);
+    mg.addColorStop(1, 'rgba(255,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(_mx, _my, glowRadius, 0, Math.PI * 2);
+    ctx.fillStyle = mg;
+    ctx.fill();
+
+    // Eye orbit driven by mimic's movement direction (follows player's historical path)
+    const ex = mimicLookX * 2.5;
+    const ey = mimicLookY * 2.0;
+    const bx = mimicLookX * 1.2;
+    const by = mimicLookY * 1.5;
+
+    // Outer body: crossfade Mimic-0 (pink ear bumps) → Mimic-9 (red tall horns)
+    const bodyColor = `rgb(255,${glowG},${glowB})`;
+
+    ctx.save();
+    ctx.translate(_mx, _my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = bodyColor;
+    ctx.fill(M_BODY_OUTER);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(_mx, _my); ctx.scale(M_R / 13.41, M_R / 13.41); ctx.translate(-51.19, -47.30);
+    ctx.globalAlpha = t;
+    ctx.fillStyle = bodyColor;
+    ctx.fill(M9_BODY_OUTER);
+    ctx.restore();
+
+    ctx.globalAlpha = 1;
+
+    // White inner body + eyes in Mimic-0 coordinate space
+    ctx.save();
+    ctx.translate(_mx, _my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fill(P_BODY_INNER);
+
+    // Left eye: D-shape crescent, highlight clipped inside
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.fillStyle = '#082746';
+    ctx.fill(M_EYE_LEFT);
+    ctx.clip(M_EYE_LEFT);
+    ctx.beginPath();
+    ctx.arc(27.3597 + bx, 28.7153 + by, 2.25306, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    // Right eye: mirrored D-shape, highlight clipped inside
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.fillStyle = '#082746';
+    ctx.fill(M_EYE_RIGHT);
+    ctx.clip(M_EYE_RIGHT);
+    ctx.beginPath();
+    ctx.arc(41.2778 + bx, 28.5219 + by, 2.25274, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+  }
+
+  // Player character
+  {
+    // SVG body is centered at (34.19, 30.08); white body spans ±14.19 wide, ±10.07 tall
+    const SVG_CX = 34.19, SVG_CY = 30.08;
+    const scale  = P_R / 14.19;
+
+    // Ambient glow
+    const pg = ctx.createRadialGradient(px, py, 0, px, py, P_R * 3);
+    pg.addColorStop(0, 'rgba(145,201,255,0.22)');
+    pg.addColorStop(1, 'rgba(145,201,255,0)');
+    ctx.beginPath();
+    ctx.arc(px, py, P_R * 3, 0, Math.PI * 2);
+    ctx.fillStyle = pg;
+    ctx.fill();
+
+    // Eye orbit offset (both eyes move together, in SVG units)
+    const ex = joy.nx * 3.0;
+    const ey = joy.ny * 2.5;
+    // Eyeball highlight orbit within dark iris (relative to iris center)
+    const bx = joy.nx * 1.5;
+    const by = joy.ny * 2.0;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(scale, scale);
+    ctx.translate(-SVG_CX, -SVG_CY);
+
+    // Blue outer body (shadow / base blob)
+    ctx.fillStyle = '#55BFFF';
+    ctx.fill(P_BODY_OUTER);
+
+    // White inner body
+    ctx.fillStyle = '#ffffff';
+    ctx.fill(P_BODY_INNER);
+
+    // Left iris + highlight
+    ctx.save();
+    ctx.translate(28.4304 + ex, 28.8079 + ey);
+    ctx.rotate(3.83076 * Math.PI / 180);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4.78582, 6.60911, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#082746';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(bx + 0.9, by - 1.0, 1.6, 2.2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    // Right iris + highlight
+    ctx.save();
+    ctx.translate(39.9361 + ex, 28.7957 + ey);
+    ctx.rotate(-3.98754 * Math.PI / 180);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4.78582, 6.60911, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#082746';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(bx + 0.9, by - 1.0, 1.6, 2.2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  // Flash overlay
+  if (performance.now() < flashEnd) {
+    ctx.fillStyle = flashColor;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Repel wave — expanding green ring from player position
+  if (repelWave) {
+    const WAVE_SPEED = 700;
+    const elapsed = (performance.now() - repelWave.startT) / 1000;
+    const r = elapsed * WAVE_SPEED;
+    const maxR = Math.sqrt(W * W + H * H);
+
+    if (r < maxR) {
+      const distToMimic = Math.sqrt(
+        (repelWave.tx - repelWave.x) ** 2 +
+        (repelWave.ty - repelWave.y) ** 2
+      );
+      const pastMimic = Math.max(0, r - distToMimic);
+      const alpha = Math.max(0, 1 - pastMimic / (maxR * 0.25));
+
+      ctx.save();
+      // Soft outer glow pass
+      ctx.globalAlpha = alpha * 0.3;
+      ctx.strokeStyle = '#C2FFC6';
+      ctx.lineWidth = 12 + (1 - alpha) * 8;
+      ctx.shadowColor = '#C2FFC6';
+      ctx.shadowBlur = 40;
+      ctx.filter = 'blur(6px)';
+      ctx.beginPath();
+      ctx.arc(repelWave.x, repelWave.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.filter = 'none';
+      // Crisp inner ring pass
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.strokeStyle = '#C2FFC6';
+      ctx.lineWidth = 2 + (1 - alpha) * 3;
+      ctx.shadowColor = '#C2FFC6';
+      ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.arc(repelWave.x, repelWave.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      repelWave = null;
+    }
+  }
+}
+
+// ── Pause ─────────────────────────────────────────────────────────
+function togglePause() {
+  if (!isPaused) {
+    isPaused = true;
+    pauseScoreEl.textContent = score;
+    document.getElementById('pause').classList.add('active');
+    menuFocus = 0;
+    refreshFocus('pause');
+    startMenuLoop();
+  } else {
+    document.getElementById('pause').classList.remove('active');
+    document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused'));
+    stopMenuLoop();
+    runCountdown(() => { isPaused = false; });
+  }
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === 'Escape' && document.getElementById('game').classList.contains('active')) {
+    togglePause();
+  }
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// ── Resize ────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (document.getElementById('game').classList.contains('active')) {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    updateScale();
+  }
+});
+
+// ── Arcade joystick + key forwarding via postMessage ─────────────
+window.addEventListener('message', ({ data }) => {
+  if (!data) return;
+  if (data.type === 'JOYSTICK') {
+    joy.nx       = data.x;
+    joy.ny       = data.y;
+    joy.dragging = (data.x !== 0 || data.y !== 0);
+    joy._active  = joy.dragging;
+    const tx = data.x * JOY_R, ty = data.y * JOY_R;
+    jThumb.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
+  }
+  if (data.type === 'KEY' && data.key === 'Escape') {
+    if (document.getElementById('game').classList.contains('active')) togglePause();
+  }
+});
+
+// ── Arcade iframe adjustments ─────────────────────────────────────
+// The arcade console applies a squircle mask that clips the top corners.
+// Scores in the default 20px corners become invisible. Push them inward
+// using vw/vh units so the safe zone scales with screen size.
+if (window !== window.top) {
+  jWrap.style.display = 'none';
+  document.getElementById('hud').style.padding = '8vh 8vw 0';
+  document.getElementById('bottom-bar').style.padding = '0 8vw 8vh';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+if (localStorage.getItem('mimic_seen_howto') === '1') {
+  document.getElementById('title-howto').classList.remove('hidden');
+}
+const bootScreen = localStorage.getItem('mimic_seen_controls') === '1' ? 'title' : 'controls-tutorial';
+menuFocus = 0;
+refreshFocus(bootScreen);
+startMenuLoop();
+document.getElementById(bootScreen).classList.add('active');
+</script>
+</body>
+</html>

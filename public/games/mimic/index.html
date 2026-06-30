@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>MIMIC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Monomaniac+One&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -321,44 +321,55 @@
       pointer-events: none;
       z-index: 5;
     }
-    .hud-block { line-height: 1.1; }
+    .hud-block { line-height: 1.2; }
     .hud-block.right { text-align: right; }
     .hud-label {
       display: block;
-      font-size: 9px;
-      color: #2A2A2A;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 4px;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 3px;
     }
     .hud-val {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -1px;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: #fff;
     }
 
-    #speed-wrap {
+    #repel-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
       padding-top: 2px;
     }
-    .speed-label {
-      font-size: 9px;
-      color: #2A2A2A;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+    .repel-label {
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.6);
     }
-    .speed-pips { display: flex; gap: 4px; }
+    .repel-pips { display: flex; gap: 6px; }
     .pip {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      mix-blend-mode: color-dodge;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pip::after {
+      content: '';
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #1A1A1A;
-      transition: background 0.2s;
+      background: transparent;
     }
-    .pip.lit { background: #FF2D2D; }
+    .pip.lit::after { background: #C2FFC6; }
 
     /* ── Countdown overlay ── */
     #countdown {
@@ -394,29 +405,32 @@
       pointer-events: none;
       white-space: nowrap;
     }
+    #bottom-bar-glow {
+      position: absolute;
+      inset: -20px -40px;
+      background: rgba(255,124,174,0.08);
+      border-radius: 50%;
+      mix-blend-mode: color-dodge;
+      pointer-events: none;
+    }
     #status-label {
-      font-size: 9px;
-      color: #2A2A2A;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: #fff;
     }
     #spawn-bar-track {
-      width: 180px;
-      height: 2px;
-      background: #131313;
-      border-radius: 1px;
+      width: 100px;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 100px;
       overflow: hidden;
     }
     #spawn-bar-fill {
       height: 100%;
       width: 0%;
-      background: #FF6633;
-      border-radius: 1px;
-    }
-    #collect-hint {
-      font-size: 10px;
-      color: #2A2A2A;
-      visibility: hidden;
+      background: #FF7CAE;
+      border-radius: 100px;
     }
 
     /* ── Virtual joystick ── */
@@ -581,25 +595,25 @@
 
   <div id="hud">
     <div class="hud-block">
-      <span class="hud-label">SCORE</span>
+      <span class="hud-label">Your score</span>
       <span class="hud-val" id="score-val">0</span>
     </div>
-    <div id="speed-wrap">
-      <span class="speed-label">MIMIC SPEED</span>
-      <div class="speed-pips" id="pips"></div>
+    <div id="repel-wrap">
+      <span class="repel-label">Repel</span>
+      <div class="repel-pips" id="pips"></div>
     </div>
     <div class="hud-block right">
-      <span class="hud-label">BEST</span>
-      <span class="hud-val" id="best-val" style="color:#333">0</span>
+      <span class="hud-label">Best score</span>
+      <span class="hud-val" id="best-val">0</span>
     </div>
   </div>
 
   <div id="bottom-bar">
-    <span id="status-label">MIMIC SPAWNS IN</span>
+    <div id="bottom-bar-glow"></div>
+    <span id="status-label">Mimic spawning in...</span>
     <div id="spawn-bar-track">
       <div id="spawn-bar-fill"></div>
     </div>
-    <span id="collect-hint">collect 6 more to reset</span>
   </div>
 
   <div id="joystick-wrap">
@@ -682,7 +696,6 @@ const scoreValEl  = document.getElementById('score-val');
 const bestValEl   = document.getElementById('best-val');
 const statusEl    = document.getElementById('status-label');
 const barFillEl   = document.getElementById('spawn-bar-fill');
-const collectHint = document.getElementById('collect-hint');
 const pipsEl      = document.getElementById('pips');
 const goScoreEl   = document.getElementById('go-score');
 const goBestEl    = document.getElementById('go-best');
@@ -709,6 +722,7 @@ let raf      = null;
 let isPaused = false;
 let isDead   = false;
 let flashColor = null, flashEnd = 0;
+let repelWave  = null;
 
 // ── Menu navigation state ────────────────────────────────────────
 let menuFocus      = 0;
@@ -842,18 +856,12 @@ function quitToTitle() {
 // ── Pip display ───────────────────────────────────────────────────
 function buildPips() {
   pipsEl.innerHTML = '';
-  for (let i = 0; i < MAX_PIPS; i++) {
+  const filled = RESET_NEED - toReset;
+  for (let i = 0; i < RESET_NEED; i++) {
     const p = document.createElement('div');
-    p.className = 'pip' + (i < resetCount ? ' lit' : '');
+    p.className = 'pip' + (i < filled ? ' lit' : '');
     pipsEl.appendChild(p);
   }
-}
-
-// ── Bar color (orange → red as resets increase) ───────────────────
-function barColor() {
-  const t = Math.min(resetCount / MAX_PIPS, 1);
-  const g = Math.floor(100 * (1 - t));
-  return `rgb(255,${g},0)`;
 }
 
 // ── Virtual joystick ─────────────────────────────────────────────
@@ -909,6 +917,7 @@ function spawnCols() {
 function resetMimic() {
   resetCount++;
   updateScale();
+  repelWave = { x: px, y: py, startT: performance.now(), tx: mx, ty: my };
   mimicOn = false;
   mx = -9999; my = -9999;
   mIdx = 0; loopStartT = 0;
@@ -919,10 +928,9 @@ function resetMimic() {
   spawnDelay = Math.max(2000, 5000 - resetCount * 500);
 
   buildPips();
-  statusEl.textContent     = 'MIMIC SPAWNS IN';
-  barFillEl.style.background = barColor();
-  barFillEl.style.width    = '0%';
-  collectHint.style.visibility = 'hidden';
+  statusEl.textContent       = 'Mimic spawning in...';
+  barFillEl.style.background = '#FF7CAE';
+  barFillEl.style.width      = '0%';
 
   flashColor = 'rgba(255,255,255,0.06)';
   flashEnd   = performance.now() + 120;
@@ -986,17 +994,16 @@ function startGame() {
   isDead     = false;
   flashColor = null;
   flashEnd   = 0;
+  repelWave  = null;
 
   cols = spawnCols();
   buildPips();
 
   scoreValEl.textContent        = '0';
   bestValEl.textContent         = best;
-  bestValEl.style.color         = '#333';
-  statusEl.textContent          = 'MIMIC SPAWNS IN';
+  statusEl.textContent          = 'Mimic spawning in...';
   barFillEl.style.width         = '0%';
-  barFillEl.style.background    = barColor();
-  collectHint.style.visibility  = 'hidden';
+  barFillEl.style.background    = '#FF7CAE';
 
   goTo('game');
   runCountdown(() => { raf = requestAnimationFrame(loop); });
@@ -1040,9 +1047,8 @@ function loop(ts) {
     barFillEl.style.width = Math.min(age / spawnDelay * 100, 100) + '%';
     if (age >= spawnDelay) {
       mimicOn = true;
-      statusEl.textContent         = 'MIMIC ACTIVE';
-      barFillEl.style.width        = '100%';
-      collectHint.style.visibility = 'visible';
+      statusEl.textContent  = 'Mimic active';
+      barFillEl.style.width = '100%';
     }
   }
 
@@ -1090,8 +1096,7 @@ function loop(ts) {
       score++;
       toReset--;
       scoreValEl.textContent = score;
-      if (score > best) bestValEl.style.color = '#fff';
-      collectHint.textContent = 'collect ' + Math.max(0, toReset) + ' more to reset';
+      buildPips();
       if (toReset <= 0) resetMimic();
     }
   }
@@ -1299,6 +1304,36 @@ function draw() {
   if (performance.now() < flashEnd) {
     ctx.fillStyle = flashColor;
     ctx.fillRect(0, 0, W, H);
+  }
+
+  // Repel wave — expanding green ring from player position
+  if (repelWave) {
+    const WAVE_SPEED = 700;
+    const elapsed = (performance.now() - repelWave.startT) / 1000;
+    const r = elapsed * WAVE_SPEED;
+    const maxR = Math.sqrt(W * W + H * H);
+
+    if (r < maxR) {
+      const distToMimic = Math.sqrt(
+        (repelWave.tx - repelWave.x) ** 2 +
+        (repelWave.ty - repelWave.y) ** 2
+      );
+      const pastMimic = Math.max(0, r - distToMimic);
+      const alpha = Math.max(0, 1 - pastMimic / (maxR * 0.25));
+
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.75;
+      ctx.strokeStyle = '#C2FFC6';
+      ctx.lineWidth = 2 + (1 - alpha) * 4;
+      ctx.shadowColor = '#C2FFC6';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(repelWave.x, repelWave.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      repelWave = null;
+    }
   }
 }
 

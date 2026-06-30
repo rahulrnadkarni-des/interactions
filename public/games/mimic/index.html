@@ -11,7 +11,7 @@
 
     html, body {
       width: 100%; height: 100%;
-      background: #070707;
+      background: linear-gradient(180deg, #004555 0%, #020609 100%);
       font-family: 'Space Grotesk', sans-serif;
       color: #fff;
       overflow: hidden;
@@ -28,7 +28,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #070707;
+      background: linear-gradient(180deg, #004555 0%, #020609 100%);
       z-index: 10;
     }
     .screen.active { display: flex; }
@@ -41,7 +41,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(7, 7, 7, 0.88);
+      background: rgba(2, 6, 9, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       z-index: 20;
@@ -669,6 +669,15 @@ const JOY_R           = 38;
 // ── DOM ──────────────────────────────────────────────────────────
 const canvas      = document.getElementById('c');
 const ctx         = canvas.getContext('2d');
+
+// Player SVG paths — parsed once, drawn each frame
+const P_BODY_OUTER = new Path2D('M51.1576 30.0328C51.1576 33.3835 50.9347 42.6208 48.2105 44.9237C45.734 46.4997 44.0598 44.012 40.9078 44.012C37.3056 44.012 37.1786 45.6742 33.8015 45.6742C30.4244 45.6742 29.5809 44.012 26.654 44.012C23.7272 44.012 23.1449 45.6742 19.9929 44.3984C16.6189 42.0258 17.2258 33.8154 17.2258 30.0328C17.2258 26.5027 18.4335 23.1042 21.4219 20.7641C24.5025 18.3518 29.4355 18.0308 34.1917 18.0308C38.8168 18.0308 43.9521 19.0376 47.0125 21.3339C50.1523 23.6897 51.1576 26.4024 51.1576 30.0328Z');
+const P_BODY_INNER = new Path2D('M48.3837 30.0397C48.3837 32.8425 47.9106 35.9367 45.6319 37.8631C43.035 40.0584 38.3665 40.1494 34.1919 40.1494C30.4893 40.1494 25.6221 39.64 23.0952 37.8631C20.2729 35.8784 20 33.2037 20 30.0397C20 27.0867 21.0102 24.2439 23.51 22.2865C26.0868 20.2686 30.2133 20 34.1919 20C38.0607 20 42.3564 20.8422 44.9164 22.7631C47.5428 24.7337 48.3837 27.0028 48.3837 30.0397Z');
+// Mimic SVG paths — parsed once, drawn each frame
+const M_BODY_OUTER = new Path2D('M34.1921 18.0312C38.817 18.0313 43.952 19.0378 47.0124 21.334C47.2286 21.4962 47.5384 21.4718 47.7063 21.2599C48.0276 20.8543 48.3247 20.4361 48.5407 20.1191C48.651 19.9573 48.9052 20.0288 48.9069 20.2246C48.9124 20.8351 48.8972 21.7936 48.7902 22.6889C48.7728 22.835 48.8177 22.9818 48.9132 23.0937C50.5747 25.0404 51.1579 27.2709 51.1579 30.0332C51.1579 33.3842 50.9347 42.621 48.2106 44.9238C45.7341 46.4998 44.0599 44.0117 40.9079 44.0117C37.3057 44.0117 37.1786 45.6738 33.8015 45.6738C30.4245 45.6738 29.5808 44.0117 26.654 44.0117C23.7442 44.0118 23.1516 45.655 20.0475 44.4203C20.0121 44.4063 19.9771 44.3876 19.9463 44.3652C16.6247 41.9501 17.2262 33.7984 17.2263 30.0332C17.2263 27.4115 17.8928 24.8627 19.4598 22.7658C19.5437 22.6535 19.5796 22.5122 19.5595 22.3734C19.4191 21.4047 19.3989 20.3076 19.405 19.6338C19.4067 19.438 19.6609 19.3665 19.7712 19.5283C20.0006 19.8649 20.3212 20.3154 20.6653 20.7437C20.8379 20.9585 21.1522 20.9784 21.3679 20.807C21.3857 20.7928 21.4036 20.7787 21.4216 20.7646C24.5022 18.3523 29.4359 18.0312 34.1921 18.0312Z');
+const M_EYE_LEFT  = new Path2D('M20.9917 25.854C20.7807 26.6817 20.7348 27.5428 20.8566 28.3882C20.9784 29.2336 21.2656 30.0468 21.7017 30.7812C22.1377 31.5157 22.7142 32.157 23.3981 32.6687C24.082 33.1803 24.8601 33.5523 25.6877 33.7632C26.5154 33.9742 27.3765 34.0201 28.2219 33.8983C29.0673 33.7765 29.8805 33.4893 30.6149 33.0533C31.3494 32.6172 31.9907 32.0407 32.5024 31.3568C33.014 30.6729 33.386 29.8949 33.5969 29.0672L27.2943 27.4606L20.9917 25.854Z');
+const M_EYE_RIGHT = new Path2D('M47.3924 25.7012C47.6033 26.5289 47.6492 27.39 47.5274 28.2354C47.4056 29.0808 47.1184 29.894 46.6824 30.6284C46.2463 31.3628 45.6699 32.0042 44.9859 32.5158C44.302 33.0275 43.524 33.3994 42.6963 33.6104C41.8686 33.8214 41.0075 33.8673 40.1621 33.7455C39.3167 33.6236 38.5036 33.3365 37.7691 32.9004C37.0347 32.4644 36.3933 31.8879 35.8817 31.204C35.37 30.52 34.9981 29.742 34.7871 28.9144L41.0897 27.3078L47.3924 25.7012Z');
+const M9_BODY_OUTER = new Path2D('M35.8824 34.5566C35.907 34.3734 36.1523 34.3358 36.2369 34.4999C36.5731 35.1554 37.172 36.2445 37.7057 36.8085C38.2612 37.3955 39.1447 37.8193 39.5036 37.9762C39.6059 38.021 39.7207 38.023 39.8263 37.9868L39.8849 37.9667C39.917 37.9557 39.9477 37.9413 39.9768 37.9238C42.8964 36.1738 47.1114 35.9238 51.1891 35.9238C55.1237 35.9238 59.4492 36.6957 62.3819 38.4335C62.5235 38.5175 62.6979 38.5273 62.8421 38.4477C63.2392 38.2286 63.9674 37.7808 64.4244 37.2216C64.9158 36.6204 65.4345 35.4915 65.7223 34.8134C65.7948 34.6437 66.0419 34.6629 66.0797 34.8437C66.2517 35.6678 66.5229 37.1871 66.444 38.2578C66.365 39.3281 65.8834 40.2505 65.5676 40.7515C65.456 40.9286 65.4598 41.1569 65.581 41.3277C66.7803 43.0181 67.2154 44.9409 67.2154 47.2607C67.2154 50.4259 67.0044 59.1508 64.4313 61.3261C62.0921 62.8146 60.5109 60.465 57.5338 60.4648C54.1311 60.4648 54.0109 62.0351 50.8209 62.0351C47.6309 62.0351 46.8336 60.4648 44.069 60.4648C41.3207 60.465 40.7606 62.0169 37.8286 60.8507C37.7951 60.8374 37.7621 60.8197 37.733 60.7986C34.5956 58.517 35.1637 50.8171 35.1637 47.2607C35.1637 45.0332 35.6725 42.861 36.852 41.0054C36.9664 40.8254 36.9547 40.5923 36.8279 40.4209C36.4769 39.9463 35.9235 39.0562 35.7662 37.9872C35.61 36.9253 35.7706 35.3911 35.8824 34.5566Z');
 const scoreValEl  = document.getElementById('score-val');
 const bestValEl   = document.getElementById('best-val');
 const statusEl    = document.getElementById('status-label');
@@ -690,6 +699,7 @@ let history  = [];
 let cols     = [];
 let mx = -9999, my = -9999, mimicOn = false;
 let mIdx = 0;
+let mimicLookX = 0, mimicLookY = 0;
 let loopStartT = 0;
 let score    = 0;
 let best     = 0;
@@ -902,6 +912,7 @@ function resetMimic() {
   mimicOn = false;
   mx = -9999; my = -9999;
   mIdx = 0; loopStartT = 0;
+  mimicLookX = 0; mimicLookY = 0;
   history = [];
   trail   = [];
   toReset = RESET_NEED;
@@ -966,6 +977,7 @@ function startGame() {
   mimicOn  = false;
   mx = -9999; my = -9999;
   mIdx = 0; loopStartT = 0;
+  mimicLookX = 0; mimicLookY = 0;
   score      = 0;
   toReset    = RESET_NEED;
   resetCount = 0;
@@ -1042,19 +1054,28 @@ function loop(ts) {
       if (mx === -9999) { mx = tx; my = ty; }
       const dx = tx - mx, dy = ty - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) { mimicLookX = dx / dist; mimicLookY = dy / dist; }
       if (dist <= M_SPEED) { mx = tx; my = ty; mIdx++; }
       else { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
     } else {
-      if (mx === -9999) { mx = px; my = py; }
+      if (mx === -9999) {
+        if (history.length === 0) {
+          // Player hasn't moved yet — spawn at opposite corner to avoid instant collision
+          mx = px < W / 2 ? W - M_R : M_R;
+          my = py < H / 2 ? H - M_R : M_R;
+        } else {
+          mx = px; my = py;
+        }
+      }
       const dx = px - mx, dy = py - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 0.5) { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
+      if (dist > 0.5) { mimicLookX = dx / dist; mimicLookY = dy / dist; mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
     }
   }
   if (mimicOn) {
     const cdx = px - mx, cdy = py - my;
     if (mx !== -9999 && Math.sqrt(cdx * cdx + cdy * cdy) < P_R + M_R - 2) {
-      draw(ts); triggerDeath(); return;
+      draw(); triggerDeath(); return;
     }
   }
 
@@ -1076,12 +1097,15 @@ function loop(ts) {
   }
   if (allDead) cols = spawnCols();
 
-  draw(ts);
+  draw();
 }
 
 // ── Draw ──────────────────────────────────────────────────────────
-function draw(ts) {
-  ctx.fillStyle = '#070707';
+function draw() {
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#004555');
+  bgGrad.addColorStop(1, '#020609');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
   // Trail
@@ -1097,56 +1121,179 @@ function draw(ts) {
   for (const c of cols) {
     if (!c.alive) continue;
     c.pulse += 0.05;
-    const s  = 1 + Math.sin(c.pulse) * 0.18;
-    const gr = C_R * 4 * s;
-    const g  = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, gr);
-    g.addColorStop(0, 'rgba(255,210,40,0.22)');
-    g.addColorStop(1, 'rgba(255,210,40,0)');
+    const s    = 1 + Math.sin(c.pulse) * 0.18;
+    const gr   = C_R * 4 * s;
+    const g    = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, gr);
+    g.addColorStop(0, 'rgba(194,255,198,0.22)');
+    g.addColorStop(1, 'rgba(194,255,198,0)');
     ctx.beginPath();
     ctx.arc(c.x, c.y, gr, 0, Math.PI * 2);
     ctx.fillStyle = g;
     ctx.fill();
+    const half = C_R * s * 0.8;
+    const cr   = Math.max(1, half * 0.18);
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Math.PI / 4);
     ctx.beginPath();
-    ctx.arc(c.x, c.y, C_R * s, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFD428';
+    ctx.moveTo(-half + cr, -half);
+    ctx.lineTo( half - cr, -half);
+    ctx.arcTo( half, -half,  half, -half + cr, cr);
+    ctx.lineTo( half,  half - cr);
+    ctx.arcTo( half,  half,  half - cr,  half, cr);
+    ctx.lineTo(-half + cr,  half);
+    ctx.arcTo(-half,  half, -half,  half - cr, cr);
+    ctx.lineTo(-half, -half + cr);
+    ctx.arcTo(-half, -half, -half + cr, -half, cr);
+    ctx.closePath();
+    ctx.fillStyle = '#C2FFC6';
     ctx.fill();
+    ctx.restore();
   }
 
-  // Mimic
+  // Mimic character
   if (mimicOn && mx !== -9999) {
-    const intensity = Math.min(resetCount / MAX_PIPS, 1);
-    const glowR     = M_R * (3.5 + intensity * 2);
-    const innerR    = Math.floor(45 * (1 - intensity));
-    const innerA    = (0.35 + intensity * 0.2).toFixed(2);
-    const mg = ctx.createRadialGradient(mx, my, 0, mx, my, glowR);
-    mg.addColorStop(0, `rgba(255,${innerR},${innerR},${innerA})`);
+    const SVG_CX = 34.19, SVG_CY = 30.08;
+    const scale  = M_R / 14.19;
+
+    // Threat glow — shifts from soft pink to angry red as intensity rises
+    const t           = Math.min(resetCount / MAX_PIPS, 1);
+    const glowG       = (112 - 77 * t) | 0;
+    const glowB       = (169 - 101 * t) | 0;
+    const glowA       = (0.25 + t * 0.2).toFixed(2);
+    const glowRadius  = M_R * (3.5 + t * 2);
+    const mg = ctx.createRadialGradient(mx, my, 0, mx, my, glowRadius);
+    mg.addColorStop(0, `rgba(255,${glowG},${glowB},${glowA})`);
     mg.addColorStop(1, 'rgba(255,0,0,0)');
     ctx.beginPath();
-    ctx.arc(mx, my, glowR, 0, Math.PI * 2);
+    ctx.arc(mx, my, glowRadius, 0, Math.PI * 2);
     ctx.fillStyle = mg;
     ctx.fill();
+
+    // Eye orbit driven by mimic's movement direction (follows player's historical path)
+    const ex = mimicLookX * 2.5;
+    const ey = mimicLookY * 2.0;
+    const bx = mimicLookX * 1.2;
+    const by = mimicLookY * 1.5;
+
+    // Outer body: crossfade Mimic-0 (pink ear bumps) → Mimic-9 (red tall horns)
+    const bodyColor = `rgb(255,${glowG},${glowB})`;
+
+    ctx.save();
+    ctx.translate(mx, my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+    ctx.globalAlpha = 1 - t;
+    ctx.fillStyle = bodyColor;
+    ctx.fill(M_BODY_OUTER);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(mx, my); ctx.scale(M_R / 13.41, M_R / 13.41); ctx.translate(-51.19, -47.30);
+    ctx.globalAlpha = t;
+    ctx.fillStyle = bodyColor;
+    ctx.fill(M9_BODY_OUTER);
+    ctx.restore();
+
+    ctx.globalAlpha = 1;
+
+    // White inner body + eyes in Mimic-0 coordinate space
+    ctx.save();
+    ctx.translate(mx, my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fill(P_BODY_INNER);
+
+    // Left eye: D-shape crescent, highlight clipped inside
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.fillStyle = '#082746';
+    ctx.fill(M_EYE_LEFT);
+    ctx.clip(M_EYE_LEFT);
     ctx.beginPath();
-    ctx.arc(mx, my, M_R, 0, Math.PI * 2);
-    ctx.fillStyle = '#FF2D2D';
+    ctx.arc(27.3597 + bx, 28.7153 + by, 2.25306, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
+    ctx.restore();
+
+    // Right eye: mirrored D-shape, highlight clipped inside
+    ctx.save();
+    ctx.translate(ex, ey);
+    ctx.fillStyle = '#082746';
+    ctx.fill(M_EYE_RIGHT);
+    ctx.clip(M_EYE_RIGHT);
     ctx.beginPath();
-    ctx.arc(mx, my, M_R * 0.45, 0, Math.PI * 2);
-    ctx.fillStyle = '#FF7070';
+    ctx.arc(41.2778 + bx, 28.5219 + by, 2.25274, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
   }
 
-  // Player glow
-  const pg = ctx.createRadialGradient(px, py, 0, px, py, P_R * 2.8);
-  pg.addColorStop(0, 'rgba(255,255,255,0.28)');
-  pg.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.beginPath();
-  ctx.arc(px, py, P_R * 2.8, 0, Math.PI * 2);
-  ctx.fillStyle = pg;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(px, py, P_R, 0, Math.PI * 2);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fill();
+  // Player character
+  {
+    // SVG body is centered at (34.19, 30.08); white body spans ±14.19 wide, ±10.07 tall
+    const SVG_CX = 34.19, SVG_CY = 30.08;
+    const scale  = P_R / 14.19;
+
+    // Ambient glow
+    const pg = ctx.createRadialGradient(px, py, 0, px, py, P_R * 3);
+    pg.addColorStop(0, 'rgba(145,201,255,0.22)');
+    pg.addColorStop(1, 'rgba(145,201,255,0)');
+    ctx.beginPath();
+    ctx.arc(px, py, P_R * 3, 0, Math.PI * 2);
+    ctx.fillStyle = pg;
+    ctx.fill();
+
+    // Eye orbit offset (both eyes move together, in SVG units)
+    const ex = joy.nx * 3.0;
+    const ey = joy.ny * 2.5;
+    // Eyeball highlight orbit within dark iris (relative to iris center)
+    const bx = joy.nx * 1.5;
+    const by = joy.ny * 2.0;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.scale(scale, scale);
+    ctx.translate(-SVG_CX, -SVG_CY);
+
+    // Blue outer body (shadow / base blob)
+    ctx.fillStyle = '#55BFFF';
+    ctx.fill(P_BODY_OUTER);
+
+    // White inner body
+    ctx.fillStyle = '#ffffff';
+    ctx.fill(P_BODY_INNER);
+
+    // Left iris + highlight
+    ctx.save();
+    ctx.translate(28.4304 + ex, 28.8079 + ey);
+    ctx.rotate(3.83076 * Math.PI / 180);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4.78582, 6.60911, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#082746';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(bx + 0.9, by - 1.0, 1.6, 2.2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    // Right iris + highlight
+    ctx.save();
+    ctx.translate(39.9361 + ex, 28.7957 + ey);
+    ctx.rotate(-3.98754 * Math.PI / 180);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4.78582, 6.60911, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#082746';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(bx + 0.9, by - 1.0, 1.6, 2.2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
 
   // Flash overlay
   if (performance.now() < flashEnd) {

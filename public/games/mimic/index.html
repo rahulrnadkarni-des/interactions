@@ -314,10 +314,9 @@
     #hud {
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 56px;
       display: flex;
       flex-direction: row;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       padding: 20px 20px 0;
       gap: 28px;
@@ -401,7 +400,7 @@
       height: 50px;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       padding: 0 20px 20px;
       gap: 10px;
       z-index: 5;
@@ -1408,9 +1407,14 @@ window.addEventListener('message', ({ data }) => {
   }
 });
 
-// ── Hide in-game joystick when running inside arcade iframe ───────
+// ── Arcade iframe adjustments ─────────────────────────────────────
+// The arcade console applies a squircle mask that clips the top corners.
+// Scores in the default 20px corners become invisible. Push them inward
+// using vw/vh units so the safe zone scales with screen size.
 if (window !== window.top) {
   jWrap.style.display = 'none';
+  document.getElementById('hud').style.padding = '8vh 8vw 0';
+  document.getElementById('bottom-bar').style.padding = '0 8vw 8vh';
 }
 
 // ── Boot ──────────────────────────────────────────────────────────

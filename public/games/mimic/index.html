@@ -7,6 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Monomaniac+One&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'CS Matbold';
+      src: url('/fonts/CSMatboldPixel.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+    }
+  </style>
+  <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
@@ -71,27 +79,25 @@
     .btn-outline.focused { transform: scale(1.04); border-color: rgba(255,255,255,0.6); color: #fff; }
 
     /* ── Title screen ── */
-    #title .eyebrow {
-      font-size: 10px;
-      color: #444;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
     #title h1 {
-      font-size: clamp(72px, 14vw, 120px);
-      font-weight: 700;
-      letter-spacing: -6px;
+      font-family: 'CS Matbold', monospace;
+      font-size: clamp(36px, 11vw, 144px);
       line-height: 1;
-      margin-bottom: 20px;
+      color: #FFEC41;
+      text-transform: uppercase;
+      /* two-layer pixel shadow: black offset right+down */
+      text-shadow: 3px 13px 0 #000;
     }
     #title .subtitle {
+      font-family: 'Monomaniac One';
       font-size: 14px;
-      color: #555;
+      color: #fff;
+      opacity: 60%;
       font-weight: 300;
       max-width: 340px;
       text-align: center;
       line-height: 1.6;
+      letter-spacing: 12%;
     }
     #title .footer-hint {
       position: fixed;
@@ -386,7 +392,7 @@
     }
     #countdown.hidden { display: none !important; }
     #countdown-num {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'CS Matbold', sans-serif;
       font-size: clamp(80px, 18vw, 140px);
       font-weight: 700;
       letter-spacing: -4px;
@@ -397,11 +403,11 @@
     #bottom-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 20px 20px;
+      justify-content: flex-end;
+      padding: 0 20px 36px;
       gap: 10px;
       z-index: 5;
       pointer-events: none;
@@ -471,41 +477,150 @@
     }
 
     /* ── Game over ── */
-    #gameover h2 {
-      font-size: clamp(56px, 12vw, 96px);
-      font-weight: 700;
-      letter-spacing: -4px;
-      color: #FF2D2D;
+    #gameover {
+      box-shadow: inset 0 0 40px 10px #000, inset 0 0 100px rgba(0,0,0,0.75);
+    }
+    .go-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      width: min(462px, 90vw);
+    }
+    .go-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+    }
+    .go-title-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .go-caught {
+      font-family: 'CS Matbold', monospace;
+      font-size: clamp(36px, 11vw, 80px);
       line-height: 1;
+      color: #FF2F4E;
+      text-transform: uppercase;
+      /* two-layer pixel shadow: black offset right+down */
+      text-shadow: 3px 13px 0 #000;
     }
     #go-wave {
-      font-size: 11px;
-      color: #FF2D2D;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-top: 12px;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 17px;
+      line-height: 140%;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
     }
     .go-scores {
       display: flex;
-      gap: 48px;
-      margin-top: 32px;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 60px;
+      width: 100%;
     }
     .go-score-block {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 0;
     }
     .go-score-label {
-      font-size: 10px;
-      color: #333;
-      letter-spacing: 3px;
-      text-transform: uppercase;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 14px;
+      line-height: 140%;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.6);
     }
     .go-score-val {
-      font-size: 48px;
-      font-weight: 700;
-      letter-spacing: -2px;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 40px;
+      line-height: 100%;
+      letter-spacing: 0.12em;
+      color: #fff;
+    }
+    .go-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .go-prompt {
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 20px;
+      line-height: 140%;
+      letter-spacing: 0.12em;
+      color: #E1FFDD;
+      text-align: center;
+    }
+    .go-choices {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 90px;
+    }
+    .go-opt {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+    }
+    /* pixel arrow cursor — hidden by default, shown when option is focused */
+    .go-cursor {
+      position: absolute;
+      left: -36px;
+      bottom: 0;
+      width: 24px;
+      height: 24px;
+      display: none;
+    }
+    .go-opt:has(.focused) .go-cursor { display: block; }
+    .go-cursor-shadow,
+    .go-cursor-fill {
+      position: absolute;
+      width: 21.65px;
+      height: 18.75px;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+    .go-cursor-shadow {
+      background: #000;
+      left: calc(50% - 10.825px - 0.17px);
+      top: calc(50% - 9.375px + 0.33px);
+    }
+    .go-cursor-fill {
+      left: calc(50% - 10.825px + 3.08px);
+      top: calc(50% - 9.375px - 2.58px);
+    }
+    /* Reset btn styles inside gameover — the joystick nav still uses
+       .btn-fill / .btn-outline for focus tracking, but visual is plain text */
+    #gameover .btn-fill,
+    #gameover .btn-outline {
+      background: none;
+      border: none;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      font-family: 'Monomaniac One', sans-serif;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: 0.12em;
+      cursor: default;
+      transition: none;
+    }
+    #gameover .btn-fill         { color: #fff; }
+    #gameover .btn-outline      { color: #E1FFDD; }
+    #gameover .btn-fill.focused,
+    #gameover .btn-outline.focused {
+      transform: none;
+      box-shadow: none;
+      background: none;
+      border: none;
+      color: inherit;
     }
   </style>
 </head>
@@ -540,9 +655,8 @@
 
 <!-- ═══ TITLE ═══════════════════════════════════════════════ -->
 <div id="title" class="screen">
-  <p class="eyebrow">A SINGLE MECHANIC GAME</p>
   <h1>MIMIC</h1>
-  <p class="subtitle">Your past is hunting you. Move smart — it remembers everything.</p>
+  <p class="subtitle">Your past is hunting you. <br> Move smart! It remembers everything.</p>
   <div class="btn-row">
     <button class="btn-fill" id="title-play">PLAY</button>
     <button class="btn-outline hidden" id="title-howto">HOW IT WORKS</button>
@@ -632,21 +746,42 @@
 
 <!-- ═══ GAME OVER ════════════════════════════════════════════ -->
 <div id="gameover" class="screen">
-  <h2>CAUGHT.</h2>
-  <p id="go-wave">WAVE 1</p>
-  <div class="go-scores">
-    <div class="go-score-block">
-      <span class="go-score-label">SCORE</span>
-      <span class="go-score-val" id="go-score">0</span>
+  <div class="go-main">
+    <div class="go-top">
+      <div class="go-title-area">
+        <span class="go-caught">Caught</span>
+        <p id="go-wave">Wave 1</p>
+      </div>
+      <div class="go-scores">
+        <div class="go-score-block">
+          <span class="go-score-label">Your score</span>
+          <span class="go-score-val" id="go-score">0</span>
+        </div>
+        <div class="go-score-block">
+          <span class="go-score-label">Best score</span>
+          <span class="go-score-val" id="go-best">0</span>
+        </div>
+      </div>
     </div>
-    <div class="go-score-block">
-      <span class="go-score-label">BEST</span>
-      <span class="go-score-val" id="go-best" style="color:#555">0</span>
+    <div class="go-actions">
+      <p class="go-prompt">Try again?</p>
+      <div class="go-choices">
+        <div class="go-opt">
+          <div class="go-cursor">
+            <div class="go-cursor-shadow"></div>
+            <div class="go-cursor-fill" style="background:#FFEC41"></div>
+          </div>
+          <button class="btn-fill">Yes</button>
+        </div>
+        <div class="go-opt">
+          <div class="go-cursor">
+            <div class="go-cursor-shadow"></div>
+            <div class="go-cursor-fill" style="background:#FFD35B"></div>
+          </div>
+          <button class="btn-outline">No</button>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="btn-row">
-    <button class="btn-fill">TRY AGAIN</button>
-    <button class="btn-outline">MENU</button>
   </div>
 </div>
 
@@ -730,7 +865,7 @@ const SCREEN_ACTIONS = {
   'controls-tutorial': [() => { localStorage.setItem('mimic_seen_controls', '1'); goTo('title'); }],
   howto:    [() => startGame(),      () => goTo('title')],
   pause:    [() => togglePause(),    () => quitToTitle()],
-  gameover: [() => startGame(),      () => goTo('title')],
+  gameover: [() => setTimeout(() => startGame(), 2000), () => setTimeout(() => goTo('title'), 2000)],
 };
 
 function getTitleActions() {
@@ -943,8 +1078,7 @@ function triggerDeath() {
 
   goScoreEl.textContent = score;
   goBestEl.textContent  = best;
-  goWaveEl.textContent  = 'WAVE ' + (resetCount + 1);
-  goBestEl.style.color  = newBest ? '#fff' : '#555';
+  goWaveEl.textContent  = 'Wave ' + (resetCount + 1);
 
   setTimeout(() => { goTo('gameover'); }, 280);
 }
@@ -1414,7 +1548,6 @@ window.addEventListener('message', ({ data }) => {
 if (window !== window.top) {
   jWrap.style.display = 'none';
   document.getElementById('hud').style.padding = '8vh 8vw 0';
-  document.getElementById('bottom-bar').style.padding = '0 8vw 8vh';
 }
 
 // ── Boot ──────────────────────────────────────────────────────────

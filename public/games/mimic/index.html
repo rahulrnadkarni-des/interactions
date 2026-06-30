@@ -969,6 +969,7 @@ function startGame() {
 
   W = canvas.width  = window.innerWidth;
   H = canvas.height = window.innerHeight;
+  resetCount = 0;
   updateScale();
 
   px = W / 2; py = H / 2;
@@ -980,7 +981,6 @@ function startGame() {
   mimicLookX = 0; mimicLookY = 0;
   score      = 0;
   toReset    = RESET_NEED;
-  resetCount = 0;
   spawnDelay = 5000;
   isPaused   = false;
   isDead     = false;

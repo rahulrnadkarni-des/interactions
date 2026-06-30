@@ -314,10 +314,13 @@
     #hud {
       position: absolute;
       top: 0; left: 0; right: 0;
+      height: 56px;
       display: flex;
-      align-items: flex-start;
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
-      padding: 20px 24px;
+      padding: 20px 20px 0;
+      gap: 28px;
       pointer-events: none;
       z-index: 5;
     }
@@ -326,15 +329,15 @@
     .hud-label {
       display: block;
       font-family: 'Monomaniac One', sans-serif;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 3px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 4px;
     }
     .hud-val {
       font-family: 'Monomaniac One', sans-serif;
-      font-size: 12px;
-      letter-spacing: 0.12em;
+      font-size: 22px;
+      letter-spacing: 0.04em;
       color: #fff;
     }
 
@@ -347,9 +350,9 @@
     }
     .repel-label {
       font-family: 'Monomaniac One', sans-serif;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.5);
     }
     .repel-pips { display: flex; gap: 6px; }
     .pip {
@@ -394,28 +397,19 @@
     /* ── Bottom bar ── */
     #bottom-bar {
       position: absolute;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 0; left: 0; right: 0;
+      height: 50px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 8px;
+      align-items: flex-start;
+      padding: 0 20px 20px;
+      gap: 10px;
       z-index: 5;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-    #bottom-bar-glow {
-      position: absolute;
-      inset: -20px -40px;
-      background: rgba(255,124,174,0.08);
-      border-radius: 50%;
-      mix-blend-mode: color-dodge;
       pointer-events: none;
     }
     #status-label {
       font-family: 'Monomaniac One', sans-serif;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 0.12em;
       color: #fff;
     }
@@ -609,7 +603,6 @@
   </div>
 
   <div id="bottom-bar">
-    <div id="bottom-bar-glow"></div>
     <span id="status-label">Mimic spawning in...</span>
     <div id="spawn-bar-track">
       <div id="spawn-bar-fill"></div>
@@ -723,6 +716,7 @@ let isPaused = false;
 let isDead   = false;
 let flashColor = null, flashEnd = 0;
 let repelWave  = null;
+let mimicEndX  = -9999, mimicEndY = -9999, mimicHideAt = 0;
 
 // ── Menu navigation state ────────────────────────────────────────
 let menuFocus      = 0;
@@ -917,7 +911,10 @@ function spawnCols() {
 function resetMimic() {
   resetCount++;
   updateScale();
-  repelWave = { x: px, y: py, startT: performance.now(), tx: mx, ty: my };
+  const dist = mx !== -9999 ? Math.sqrt((px - mx) ** 2 + (py - my) ** 2) : 0;
+  repelWave  = { x: px, y: py, startT: performance.now(), tx: mx, ty: my };
+  mimicEndX  = mx; mimicEndY = my;
+  mimicHideAt = performance.now() + Math.max(100, dist / 700 * 1000) + 80;
   mimicOn = false;
   mx = -9999; my = -9999;
   mIdx = 0; loopStartT = 0;
@@ -992,9 +989,10 @@ function startGame() {
   spawnDelay = 5000;
   isPaused   = false;
   isDead     = false;
-  flashColor = null;
-  flashEnd   = 0;
-  repelWave  = null;
+  flashColor  = null;
+  flashEnd    = 0;
+  repelWave   = null;
+  mimicEndX   = -9999; mimicEndY = -9999; mimicHideAt = 0;
 
   cols = spawnCols();
   buildPips();
@@ -1156,8 +1154,17 @@ function draw() {
     ctx.restore();
   }
 
-  // Mimic character
-  if (mimicOn && mx !== -9999) {
+  // Mimic character — stays visible until repel ring reaches it
+  {
+    const now = performance.now();
+    const _mx = (mimicOn && mx !== -9999) ? mx
+              : (!mimicOn && now < mimicHideAt && mimicEndX !== -9999) ? mimicEndX
+              : -9999;
+    const _my = (mimicOn && my !== -9999) ? my
+              : (!mimicOn && now < mimicHideAt && mimicEndY !== -9999) ? mimicEndY
+              : -9999;
+
+  if (_mx !== -9999) {
     const SVG_CX = 34.19, SVG_CY = 30.08;
     const scale  = M_R / 14.19;
 
@@ -1167,11 +1174,11 @@ function draw() {
     const glowB       = (169 - 101 * t) | 0;
     const glowA       = (0.25 + t * 0.2).toFixed(2);
     const glowRadius  = M_R * (3.5 + t * 2);
-    const mg = ctx.createRadialGradient(mx, my, 0, mx, my, glowRadius);
+    const mg = ctx.createRadialGradient(_mx, _my, 0, _mx, _my, glowRadius);
     mg.addColorStop(0, `rgba(255,${glowG},${glowB},${glowA})`);
     mg.addColorStop(1, 'rgba(255,0,0,0)');
     ctx.beginPath();
-    ctx.arc(mx, my, glowRadius, 0, Math.PI * 2);
+    ctx.arc(_mx, _my, glowRadius, 0, Math.PI * 2);
     ctx.fillStyle = mg;
     ctx.fill();
 
@@ -1185,14 +1192,14 @@ function draw() {
     const bodyColor = `rgb(255,${glowG},${glowB})`;
 
     ctx.save();
-    ctx.translate(mx, my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+    ctx.translate(_mx, _my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
     ctx.globalAlpha = 1 - t;
     ctx.fillStyle = bodyColor;
     ctx.fill(M_BODY_OUTER);
     ctx.restore();
 
     ctx.save();
-    ctx.translate(mx, my); ctx.scale(M_R / 13.41, M_R / 13.41); ctx.translate(-51.19, -47.30);
+    ctx.translate(_mx, _my); ctx.scale(M_R / 13.41, M_R / 13.41); ctx.translate(-51.19, -47.30);
     ctx.globalAlpha = t;
     ctx.fillStyle = bodyColor;
     ctx.fill(M9_BODY_OUTER);
@@ -1202,7 +1209,7 @@ function draw() {
 
     // White inner body + eyes in Mimic-0 coordinate space
     ctx.save();
-    ctx.translate(mx, my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
+    ctx.translate(_mx, _my); ctx.scale(scale, scale); ctx.translate(-SVG_CX, -SVG_CY);
 
     ctx.fillStyle = '#ffffff';
     ctx.fill(P_BODY_INNER);
@@ -1232,6 +1239,7 @@ function draw() {
     ctx.restore();
 
     ctx.restore();
+  }
   }
 
   // Player character
@@ -1322,11 +1330,23 @@ function draw() {
       const alpha = Math.max(0, 1 - pastMimic / (maxR * 0.25));
 
       ctx.save();
-      ctx.globalAlpha = alpha * 0.75;
+      // Soft outer glow pass
+      ctx.globalAlpha = alpha * 0.3;
       ctx.strokeStyle = '#C2FFC6';
-      ctx.lineWidth = 2 + (1 - alpha) * 4;
+      ctx.lineWidth = 12 + (1 - alpha) * 8;
       ctx.shadowColor = '#C2FFC6';
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 40;
+      ctx.filter = 'blur(6px)';
+      ctx.beginPath();
+      ctx.arc(repelWave.x, repelWave.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.filter = 'none';
+      // Crisp inner ring pass
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.strokeStyle = '#C2FFC6';
+      ctx.lineWidth = 2 + (1 - alpha) * 3;
+      ctx.shadowColor = '#C2FFC6';
+      ctx.shadowBlur = 24;
       ctx.beginPath();
       ctx.arc(repelWave.x, repelWave.y, r, 0, Math.PI * 2);
       ctx.stroke();

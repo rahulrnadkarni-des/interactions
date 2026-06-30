@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>MIMIC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Monomaniac+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Monomaniac+One&display=swap" rel="stylesheet">
   <style>
     @font-face {
       font-family: 'CS Matbold';
@@ -15,12 +15,30 @@
     }
   </style>
   <style>
+    :root {
+      --c-bg-dark:    #020609;
+      --c-bg-teal:    #004555;
+      --c-text:       #ffffff;
+      --c-text-dim:   rgba(255, 255, 255, 0.6);
+      --c-text-green: #E1FFDD;
+      --c-yellow:     #FFEC41;
+      --c-yellow-alt: #FFD35B;
+      --c-player:     #55BFFF;
+      --c-mimic:      #FF2344;
+      --c-repel:      #C2FFC6;
+      --c-status:     #FF7CAE;
+      --c-danger:     #FF2F4E;
+      --f-display:    'CS Matbold', monospace;
+      --f-ui:         'Monomaniac One', sans-serif;
+      --tracking:     0.12em;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
       width: 100%; height: 100%;
-      background: linear-gradient(180deg, #004555 0%, #020609 100%);
-      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(180deg, var(--c-bg-teal) 0%, var(--c-bg-dark) 100%);
+      font-family: var(--f-ui);
       color: #fff;
       overflow: hidden;
       user-select: none;
@@ -36,7 +54,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(180deg, #004555 0%, #020609 100%);
+      background: linear-gradient(180deg, var(--c-bg-teal) 0%, var(--c-bg-dark) 100%);
       z-index: 10;
     }
     .screen.active { display: flex; }
@@ -60,7 +78,7 @@
     .btn-fill, .btn-outline {
       padding: 14px 32px;
       border-radius: 6px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--f-ui);
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 1px;
@@ -79,47 +97,90 @@
     .btn-outline.focused { transform: scale(1.04); border-color: rgba(255,255,255,0.6); color: #fff; }
 
     /* ── Title screen ── */
-    #title h1 {
-      font-family: 'CS Matbold', monospace;
-      font-size: clamp(36px, 11vw, 144px);
-      line-height: 1;
-      color: #FFEC41;
-      text-transform: uppercase;
-      /* two-layer pixel shadow: black offset right+down */
-      text-shadow: 3px 13px 0 #000;
+    #title .title-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
-    #title .subtitle {
-      font-family: 'Monomaniac One';
-      font-size: 14px;
-      color: #fff;
-      opacity: 60%;
-      font-weight: 300;
-      max-width: 340px;
-      text-align: center;
-      line-height: 1.6;
-      letter-spacing: 12%;
+    .title-logo-wrap {
+      --logo-sz: clamp(72px, 18vw, 144px);
+      position: relative;
+      width:  calc(var(--logo-sz) * 3.2);
+      height: calc(var(--logo-sz) * 1.09);
+    }
+    .title-wordmark {
+      position: absolute;
+      left:  calc(var(--logo-sz) * 0.25);
+      top: 0;
+      font-family: var(--f-display);
+      font-size: var(--logo-sz);
+      line-height: 1;
+      color: var(--c-yellow);
+      text-shadow: calc(var(--logo-sz) * -0.09) calc(var(--logo-sz) * 0.09) 0 #000;
+      white-space: nowrap;
+      user-select: none;
+      z-index: 1;
+    }
+    .title-mimic-char {
+      position: absolute;
+      left: calc(var(--logo-sz) * -0.1 - 20px);
+      bottom: calc(var(--logo-sz) * 0.05 - 40px);
+      width: calc(var(--logo-sz) * 1.08);
+      aspect-ratio: 69 / 61;
+      pointer-events: none;
+      z-index: 5;
+      animation: char-float 2.8s ease-in-out infinite;
+    }
+    .title-player-char {
+      position: absolute;
+      right: calc(var(--logo-sz) * -0.05 - 20px);
+      top: calc(var(--logo-sz) * -0.1 - 20px);
+      width: calc(var(--logo-sz) * 0.64);
+      aspect-ratio: 69 / 61;
+      pointer-events: none;
+      z-index: 5;
+      animation: char-float 2.8s ease-in-out infinite 1.4s;
+    }
+    .title-mimic-char svg,
+    .title-player-char svg { display: block; width: 100%; height: 100%; }
+
+    @keyframes char-float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+    #title .pix-hint { margin-top: -40px; }
+    .title-cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 40px;
     }
     #title .footer-hint {
       position: fixed;
       bottom: 24px;
+      font-family: var(--f-ui);
       font-size: 10px;
-      color: #2A2A2A;
+      color: var(--c-bg-teal);
       letter-spacing: 3px;
       text-transform: uppercase;
     }
 
     /* ── Controls tutorial ── */
     #controls-tutorial .eyebrow {
+      font-family: var(--f-ui);
       font-size: 10px;
-      letter-spacing: 4px;
+      letter-spacing: var(--tracking);
       text-transform: uppercase;
-      color: #444;
+      color: var(--c-text-dim);
       margin-bottom: 6px;
     }
     #controls-tutorial h2 {
+      font-family: var(--f-ui);
       font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -1px;
+      letter-spacing: var(--tracking);
+      color: var(--c-text);
       margin: 0 0 48px;
     }
     .ctrl-demo {
@@ -135,15 +196,14 @@
     }
     .ctrl-btn {
       padding: 13px 22px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: var(--f-ui);
       font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: var(--tracking);
       text-transform: uppercase;
       border-radius: 10px;
-      border: 1.5px solid #222;
-      background: transparent;
-      color: #2a2a2a;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.25);
     }
     .ctrl-btn-l { animation: ctrl-left-btn 7s ease-in-out infinite; }
     .ctrl-btn-r { animation: ctrl-right-btn 7s ease-in-out infinite; }
@@ -160,8 +220,8 @@
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: #0e0e0e;
-      border: 1.5px solid #1e1e1e;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -171,14 +231,14 @@
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: #fff;
+      background: rgba(255,255,255,0.7);
       position: absolute;
       animation: ctrl-thumb 7s ease-in-out infinite;
     }
     .ctrl-arr {
       position: absolute;
       font-size: 13px;
-      color: #1e1e1e;
+      color: rgba(255,255,255,0.15);
       font-weight: 700;
       pointer-events: none;
     }
@@ -194,10 +254,11 @@
     }
     .ctrl-lbl-select,
     .ctrl-lbl-confirm {
+      font-family: var(--f-ui);
       font-size: 10px;
-      letter-spacing: 1.5px;
+      letter-spacing: var(--tracking);
       text-transform: uppercase;
-      color: #222;
+      color: rgba(255,255,255,0.2);
     }
     .ctrl-lbl-select  { animation: ctrl-hint-select  7s ease-in-out infinite; }
     .ctrl-lbl-confirm { animation: ctrl-hint-confirm 7s ease-in-out infinite; }
@@ -221,48 +282,49 @@
       92%, 100%        { transform: translate(0, 0); }
     }
     @keyframes ctrl-left-btn {
-      0%, 12%          { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
-      18%, 26%         { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); }
-      36%, 100%        { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; }
+      0%, 12%   { color: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.12); transform: scale(1); box-shadow: none; }
+      18%, 26%  { color: #fff; border-color: rgba(255,255,255,0.6); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); }
+      36%, 100% { color: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.12); transform: scale(1); box-shadow: none; }
     }
     @keyframes ctrl-right-btn {
-      0%, 44%                  { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
-      50%, 68%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
-      76%, 82%                 { color: #fff; border-color: rgba(255,255,255,0.55); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
-      85%                      { color: #000; border-color: #fff; transform: scale(1.08); box-shadow: 0 0 32px rgba(255,255,255,0.3); background: #fff; }
-      93%, 100%                { color: #2a2a2a; border-color: #222; transform: scale(1); box-shadow: none; background: transparent; }
+      0%, 44%   { color: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.12); transform: scale(1); box-shadow: none; background: transparent; }
+      50%, 68%  { color: #fff; border-color: rgba(255,255,255,0.6); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      76%, 82%  { color: #fff; border-color: rgba(255,255,255,0.6); transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.16); background: transparent; }
+      85%       { color: #000; border-color: #fff; transform: scale(1.08); box-shadow: 0 0 32px rgba(255,255,255,0.3); background: #fff; }
+      93%, 100% { color: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.12); transform: scale(1); box-shadow: none; background: transparent; }
     }
     @keyframes ctrl-arr-l {
-      0%, 12%          { color: #1e1e1e; }
-      18%, 28%         { color: #888; }
-      36%, 100%        { color: #1e1e1e; }
+      0%, 12%   { color: rgba(255,255,255,0.15); }
+      18%, 28%  { color: rgba(255,255,255,0.6); }
+      36%, 100% { color: rgba(255,255,255,0.15); }
     }
     @keyframes ctrl-arr-r {
-      0%, 44%          { color: #1e1e1e; }
-      50%, 68%         { color: #888; }
-      74%, 100%        { color: #1e1e1e; }
+      0%, 44%   { color: rgba(255,255,255,0.15); }
+      50%, 68%  { color: rgba(255,255,255,0.6); }
+      74%, 100% { color: rgba(255,255,255,0.15); }
     }
     @keyframes ctrl-arr-d {
-      0%, 68%          { color: #1e1e1e; }
-      74%, 84%         { color: #888; }
-      92%, 100%        { color: #1e1e1e; }
+      0%, 68%   { color: rgba(255,255,255,0.15); }
+      74%, 84%  { color: rgba(255,255,255,0.6); }
+      92%, 100% { color: rgba(255,255,255,0.15); }
     }
     @keyframes ctrl-hint-select {
-      0%, 10%          { color: #222; }
-      15%, 62%         { color: #555; }
-      70%, 100%        { color: #222; }
+      0%, 10%   { color: rgba(255,255,255,0.2); }
+      15%, 62%  { color: rgba(255,255,255,0.5); }
+      70%, 100% { color: rgba(255,255,255,0.2); }
     }
     @keyframes ctrl-hint-confirm {
-      0%, 68%          { color: #222; }
-      74%, 86%         { color: #555; }
-      93%, 100%        { color: #222; }
+      0%, 68%   { color: rgba(255,255,255,0.2); }
+      74%, 86%  { color: rgba(255,255,255,0.5); }
+      93%, 100% { color: rgba(255,255,255,0.2); }
     }
 
     /* ── How to play ── */
     #howto .eyebrow {
+      font-family: var(--f-ui);
       font-size: 10px;
-      color: #444;
-      letter-spacing: 4px;
+      color: var(--c-text-dim);
+      letter-spacing: var(--tracking);
       text-transform: uppercase;
       margin-bottom: 32px;
     }
@@ -273,8 +335,8 @@
       width: min(380px, 90vw);
     }
     .how-card {
-      background: #0e0e0e;
-      border: 1px solid #141414;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
       padding: 20px;
       display: flex;
       gap: 16px;
@@ -283,22 +345,26 @@
     .how-card:first-child { border-radius: 8px 8px 0 0; }
     .how-card:last-child  { border-radius: 0 0 8px 8px; }
     .how-card .num {
+      font-family: var(--f-ui);
       font-size: 11px;
-      font-weight: 700;
-      color: #FF2D2D;
-      letter-spacing: 1px;
+      color: var(--c-mimic);
+      letter-spacing: var(--tracking);
       flex-shrink: 0;
       padding-top: 2px;
     }
     .how-card .card-title {
-      font-size: 17px;
-      font-weight: 600;
+      font-family: var(--f-ui);
+      font-size: 15px;
+      letter-spacing: var(--tracking);
+      color: var(--c-text);
       margin-bottom: 6px;
     }
     .how-card .card-desc {
-      font-size: 13px;
-      color: #555;
-      line-height: 1.55;
+      font-family: var(--f-ui);
+      font-size: 12px;
+      color: var(--c-text-dim);
+      line-height: 1.6;
+      letter-spacing: var(--tracking);
     }
 
     /* ── Game screen ── */
@@ -333,14 +399,14 @@
     .hud-block.right { text-align: right; }
     .hud-label {
       display: block;
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 11px;
       letter-spacing: 0.12em;
       color: rgba(255,255,255,0.5);
       margin-bottom: 4px;
     }
     .hud-val {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 22px;
       letter-spacing: 0.04em;
       color: #fff;
@@ -354,7 +420,7 @@
       padding-top: 2px;
     }
     .repel-label {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 11px;
       letter-spacing: 0.12em;
       color: rgba(255,255,255,0.5);
@@ -392,7 +458,7 @@
     }
     #countdown.hidden { display: none !important; }
     #countdown-num {
-      font-family: 'CS Matbold', sans-serif;
+      font-family: var(--f-display);
       font-size: clamp(80px, 18vw, 140px);
       font-weight: 700;
       letter-spacing: -4px;
@@ -407,13 +473,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      padding: 0 20px 36px;
+      padding: 0 20px 48px;
       gap: 10px;
       z-index: 5;
       pointer-events: none;
     }
     #status-label {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 11px;
       letter-spacing: 0.12em;
       color: #fff;
@@ -464,22 +530,110 @@
 
     /* ── Pause overlay ── */
     #pause h2 {
-      font-size: 56px;
-      font-weight: 700;
-      letter-spacing: -3px;
+      font-family: var(--f-display);
+      font-size: clamp(36px, 11vw, 56px);
+      line-height: 1;
+      color: var(--c-text);
+      letter-spacing: 0;
+      text-shadow: 3px 6px 0 #000;
     }
     #pause-score-row {
+      font-family: var(--f-ui);
       font-size: 12px;
-      color: #333;
-      letter-spacing: 3px;
+      color: var(--c-text-dim);
+      letter-spacing: var(--tracking);
       text-transform: uppercase;
       margin-top: 16px;
+      margin-bottom: 32px;
     }
 
-    /* ── Game over ── */
-    #gameover {
+    /* ── Pixel screen shell (shared: title + gameover) ── */
+    .pixel-screen {
       box-shadow: inset 0 0 40px 10px #000, inset 0 0 100px rgba(0,0,0,0.75);
     }
+
+    /* ── Pixel typography ── */
+    .pix-prompt {
+      font-family: var(--f-ui);
+      font-size: 20px;
+      line-height: 140%;
+      letter-spacing: var(--tracking);
+      color: var(--c-text-green);
+      text-align: center;
+    }
+    .pix-hint {
+      font-family: var(--f-ui);
+      font-size: 12px;
+      line-height: 140%;
+      letter-spacing: var(--tracking);
+      color: var(--c-text-dim);
+      text-align: center;
+    }
+
+    /* ── Pixel choice component ── */
+    .pix-choices {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 90px;
+    }
+    .pix-opt {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+    }
+    .pix-cursor {
+      position: absolute;
+      left: -36px;
+      bottom: 0;
+      width: 24px;
+      height: 24px;
+      display: none;
+    }
+    .pix-opt:has(.focused) .pix-cursor { display: block; }
+    .pix-cursor-shadow,
+    .pix-cursor-fill {
+      position: absolute;
+      width: 21.65px;
+      height: 18.75px;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+    .pix-cursor-shadow {
+      background: #000;
+      left: calc(50% - 10.825px - 0.17px);
+      top: calc(50% - 9.375px + 0.33px);
+    }
+    .pix-cursor-fill {
+      left: calc(50% - 10.825px + 3.08px);
+      top: calc(50% - 9.375px - 2.58px);
+    }
+
+    /* Plain-text pixel button — .focused tracked by JS, visual via CSS */
+    .pixel-screen .btn-fill,
+    .pixel-screen .btn-outline {
+      background: none;
+      border: none;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      font-family: var(--f-ui);
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: var(--tracking);
+      cursor: default;
+      transition: none;
+      color: var(--c-text-green);
+    }
+    .pixel-screen .btn-fill.focused,
+    .pixel-screen .btn-outline.focused {
+      transform: none;
+      box-shadow: none;
+      background: none;
+      border: none;
+      color: var(--c-text);
+    }
+
+    /* ── Game over (screen-specific layout) ── */
     .go-main {
       display: flex;
       flex-direction: column;
@@ -501,20 +655,19 @@
       gap: 4px;
     }
     .go-caught {
-      font-family: 'CS Matbold', monospace;
+      font-family: var(--f-display);
       font-size: clamp(36px, 11vw, 80px);
       line-height: 1;
-      color: #FF2F4E;
+      color: var(--c-danger);
       text-transform: uppercase;
-      /* two-layer pixel shadow: black offset right+down */
       text-shadow: 3px 13px 0 #000;
     }
     #go-wave {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 17px;
       line-height: 140%;
-      letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.6);
+      letter-spacing: var(--tracking);
+      color: var(--c-text-dim);
       text-align: center;
     }
     .go-scores {
@@ -529,105 +682,34 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
     }
     .go-score-label {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 14px;
       line-height: 140%;
-      letter-spacing: 0.12em;
-      color: rgba(255,255,255,0.6);
+      letter-spacing: var(--tracking);
+      color: var(--c-text-dim);
     }
     .go-score-val {
-      font-family: 'Monomaniac One', sans-serif;
+      font-family: var(--f-ui);
       font-size: 40px;
       line-height: 100%;
-      letter-spacing: 0.12em;
-      color: #fff;
+      letter-spacing: var(--tracking);
+      color: var(--c-text);
     }
     .go-actions {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-    }
-    .go-prompt {
-      font-family: 'Monomaniac One', sans-serif;
-      font-size: 20px;
-      line-height: 140%;
-      letter-spacing: 0.12em;
-      color: #E1FFDD;
-      text-align: center;
-    }
-    .go-choices {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 90px;
-    }
-    .go-opt {
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-    }
-    /* pixel arrow cursor — hidden by default, shown when option is focused */
-    .go-cursor {
-      position: absolute;
-      left: -36px;
-      bottom: 0;
-      width: 24px;
-      height: 24px;
-      display: none;
-    }
-    .go-opt:has(.focused) .go-cursor { display: block; }
-    .go-cursor-shadow,
-    .go-cursor-fill {
-      position: absolute;
-      width: 21.65px;
-      height: 18.75px;
-      clip-path: polygon(0 0, 100% 50%, 0 100%);
-    }
-    .go-cursor-shadow {
-      background: #000;
-      left: calc(50% - 10.825px - 0.17px);
-      top: calc(50% - 9.375px + 0.33px);
-    }
-    .go-cursor-fill {
-      left: calc(50% - 10.825px + 3.08px);
-      top: calc(50% - 9.375px - 2.58px);
-    }
-    /* Reset btn styles inside gameover — the joystick nav still uses
-       .btn-fill / .btn-outline for focus tracking, but visual is plain text */
-    #gameover .btn-fill,
-    #gameover .btn-outline {
-      background: none;
-      border: none;
-      padding: 0;
-      border-radius: 0;
-      box-shadow: none;
-      font-family: 'Monomaniac One', sans-serif;
-      font-size: 32px;
-      line-height: 1;
-      letter-spacing: 0.12em;
-      cursor: default;
-      transition: none;
-    }
-    #gameover .btn-fill         { color: #fff; }
-    #gameover .btn-outline      { color: #E1FFDD; }
-    #gameover .btn-fill.focused,
-    #gameover .btn-outline.focused {
-      transform: none;
-      box-shadow: none;
-      background: none;
-      border: none;
-      color: inherit;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
 
 <!-- ═══ CONTROLS TUTORIAL ════════════════════════════════════ -->
-<div id="controls-tutorial" class="screen">
+<div id="controls-tutorial" class="screen pixel-screen">
   <p class="eyebrow">Before you begin</p>
   <h2>Controls</h2>
   <div class="ctrl-demo">
@@ -648,24 +730,85 @@
       <span class="ctrl-lbl-confirm">Push down to confirm</span>
     </div>
   </div>
-  <div class="btn-row">
-    <button class="btn-fill" id="ctrl-got-it">Got it</button>
+  <div style="display:flex;justify-content:center;margin-top:40px;">
+    <div class="pix-opt">
+      <div class="pix-cursor">
+        <div class="pix-cursor-shadow"></div>
+        <div class="pix-cursor-fill" style="background: var(--c-yellow)"></div>
+      </div>
+      <button class="btn-fill" id="ctrl-got-it">Got it</button>
+    </div>
   </div>
 </div>
 
 <!-- ═══ TITLE ═══════════════════════════════════════════════ -->
-<div id="title" class="screen">
-  <h1>MIMIC</h1>
-  <p class="subtitle">Your past is hunting you. <br> Move smart! It remembers everything.</p>
-  <div class="btn-row">
-    <button class="btn-fill" id="title-play">PLAY</button>
-    <button class="btn-outline hidden" id="title-howto">HOW IT WORKS</button>
+<div id="title" class="screen pixel-screen">
+  <div class="title-stage">
+    <div class="title-logo-wrap">
+      <div class="title-mimic-char" aria-hidden="true">
+        <svg id="mimic-char" viewBox="0 0 69 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M34.1921 18.0312C38.817 18.0313 43.952 19.0378 47.0124 21.334C47.2286 21.4962 47.5384 21.4718 47.7063 21.2599C48.0276 20.8543 48.3247 20.4361 48.5407 20.1191C48.651 19.9573 48.9052 20.0288 48.9069 20.2246C48.9124 20.8351 48.8972 21.7936 48.7902 22.6889C48.7728 22.835 48.8177 22.9818 48.9132 23.0937C50.5747 25.0404 51.1579 27.2709 51.1579 30.0332C51.1579 33.3842 50.9347 42.621 48.2106 44.9238C45.7341 46.4998 44.0599 44.0117 40.9079 44.0117C37.3057 44.0117 37.1786 45.6738 33.8015 45.6738C30.4245 45.6738 29.5808 44.0117 26.654 44.0117C23.7442 44.0118 23.1516 45.655 20.0475 44.4203C20.0121 44.4063 19.9771 44.3876 19.9463 44.3652C16.6247 41.9501 17.2262 33.7984 17.2263 30.0332C17.2263 27.4115 17.8928 24.8627 19.4598 22.7658C19.5437 22.6535 19.5796 22.5122 19.5595 22.3734C19.4191 21.4047 19.3989 20.3076 19.405 19.6338C19.4067 19.438 19.6609 19.3665 19.7712 19.5283C20.0006 19.8649 20.3212 20.3154 20.6653 20.7437C20.8379 20.9585 21.1522 20.9784 21.3679 20.807C21.3857 20.7928 21.4036 20.7787 21.4216 20.7646C24.5022 18.3523 29.4359 18.0312 34.1921 18.0312Z" fill="#FF70A9"/>
+          <g filter="url(#f_mimic)"><path d="M48.3837 30.0397C48.3837 32.8425 47.9106 35.9367 45.6319 37.8631C43.035 40.0584 38.3665 40.1494 34.1919 40.1494C30.4893 40.1494 25.6221 39.64 23.0952 37.8631C20.2729 35.8784 20 33.2037 20 30.0397C20 27.0867 21.0102 24.2439 23.51 22.2865C26.0868 20.2686 30.2133 20 34.1919 20C38.0607 20 42.3564 20.8422 44.9164 22.7631C47.5428 24.7337 48.3837 27.0028 48.3837 30.0397Z" fill="#FFC0D3" fill-opacity="0.75"/></g>
+          <path d="M48.3839 30.0397C48.3839 32.8425 47.9107 35.9367 45.632 37.8631C43.0352 40.0584 38.3667 40.1494 34.192 40.1494C30.4894 40.1494 25.6222 39.64 23.0953 37.8631C20.273 35.8784 20.0001 33.2037 20.0001 30.0397C20.0001 27.0867 21.0104 24.2439 23.5101 22.2865C26.087 20.2686 30.2135 20 34.192 20C38.0608 20 42.3565 20.8422 44.9165 22.7631C47.5429 24.7337 48.3839 27.0028 48.3839 30.0397Z" fill="white"/>
+          <g id="m-eye-l">
+            <path d="M20.9917 25.854C20.7807 26.6817 20.7348 27.5428 20.8566 28.3882C20.9784 29.2336 21.2656 30.0468 21.7017 30.7812C22.1377 31.5157 22.7142 32.157 23.3981 32.6687C24.082 33.1803 24.8601 33.5523 25.6877 33.7632C26.5154 33.9742 27.3765 34.0201 28.2219 33.8983C29.0673 33.7765 29.8805 33.4893 30.6149 33.0533C31.3494 32.6172 31.9907 32.0407 32.5024 31.3568C33.014 30.6729 33.386 29.8949 33.5969 29.0672L27.2943 27.4606L20.9917 25.854Z" fill="#082746"/>
+            <mask id="mask_ml" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="20" y="25" width="14" height="9"><path d="M20.9917 25.854C20.7807 26.6817 20.7348 27.5428 20.8566 28.3882C20.9784 29.2336 21.2656 30.0468 21.7017 30.7812C22.1377 31.5157 22.7142 32.157 23.3981 32.6687C24.082 33.1803 24.8601 33.5523 25.6877 33.7632C26.5154 33.9742 27.3765 34.0201 28.2219 33.8983C29.0673 33.7765 29.8805 33.4893 30.6149 33.0533C31.3494 32.6172 31.9907 32.0407 32.5024 31.3568C33.014 30.6729 33.386 29.8949 33.5969 29.0672L27.2943 27.4606L20.9917 25.854Z" fill="white"/></mask>
+            <g mask="url(#mask_ml)"><circle cx="27.3597" cy="28.7153" r="2.25306" transform="rotate(-165.7 27.3597 28.7153)" fill="white"/></g>
+          </g>
+          <g id="m-eye-r">
+            <path d="M47.3924 25.7012C47.6033 26.5289 47.6492 27.39 47.5274 28.2354C47.4056 29.0808 47.1184 29.894 46.6824 30.6284C46.2463 31.3628 45.6699 32.0042 44.9859 32.5158C44.302 33.0275 43.524 33.3994 42.6963 33.6104C41.8686 33.8214 41.0075 33.8673 40.1621 33.7455C39.3167 33.6236 38.5036 33.3365 37.7691 32.9004C37.0347 32.4644 36.3933 31.8879 35.8817 31.204C35.37 30.52 34.9981 29.742 34.7871 28.9144L41.0897 27.3078L47.3924 25.7012Z" fill="#082746"/>
+            <mask id="mask_mr" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="25" width="14" height="9"><path d="M47.3924 25.7012C47.6033 26.5289 47.6492 27.39 47.5274 28.2354C47.4056 29.0808 47.1184 29.894 46.6824 30.6284C46.2463 31.3628 45.6699 32.0042 44.9859 32.5158C44.302 33.0275 43.524 33.3994 42.6963 33.6104C41.8686 33.8214 41.0075 33.8673 40.1621 33.7455C39.3167 33.6236 38.5036 33.3365 37.7691 32.9004C37.0347 32.4644 36.3933 31.8879 35.8817 31.204C35.37 30.52 34.9981 29.742 34.7871 28.9144L41.0897 27.3078L47.3924 25.7012Z" fill="white"/></mask>
+            <g mask="url(#mask_mr)"><circle cx="41.2778" cy="28.5219" r="2.25274" transform="rotate(165.7 41.2778 28.5219)" fill="white"/></g>
+          </g>
+          <defs><filter id="f_mimic" x="0" y="0" width="68.3838" height="60.1494" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur"/></filter></defs>
+        </svg>
+      </div>
+      <div class="title-wordmark" aria-label="MIMIC">MIMIC</div>
+      <div class="title-player-char" aria-hidden="true">
+        <svg id="player-char" viewBox="0 0 69 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M51.1576 30.0328C51.1576 33.3835 50.9347 42.6208 48.2105 44.9237C45.734 46.4997 44.0598 44.012 40.9078 44.012C37.3056 44.012 37.1786 45.6742 33.8015 45.6742C30.4244 45.6742 29.5809 44.012 26.654 44.012C23.7272 44.012 23.1449 45.6742 19.9929 44.3984C16.6189 42.0258 17.2258 33.8154 17.2258 30.0328C17.2258 26.5027 18.4335 23.1042 21.4219 20.7641C24.5025 18.3518 29.4355 18.0308 34.1917 18.0308C38.8168 18.0308 43.9521 19.0376 47.0125 21.3339C50.1523 23.6897 51.1576 26.4024 51.1576 30.0328Z" fill="#55BFFF"/>
+          <g filter="url(#f_player)"><path d="M48.3837 30.0397C48.3837 32.8425 47.9106 35.9367 45.6319 37.8631C43.035 40.0584 38.3665 40.1494 34.1919 40.1494C30.4893 40.1494 25.6221 39.64 23.0952 37.8631C20.2729 35.8784 20 33.2037 20 30.0397C20 27.0867 21.0102 24.2439 23.51 22.2865C26.0868 20.2686 30.2133 20 34.1919 20C38.0607 20 42.3564 20.8422 44.9164 22.7631C47.5428 24.7337 48.3837 27.0028 48.3837 30.0397Z" fill="#91C9FF" fill-opacity="0.75"/></g>
+          <path d="M48.3837 30.0397C48.3837 32.8425 47.9106 35.9367 45.6319 37.8631C43.035 40.0584 38.3665 40.1494 34.1919 40.1494C30.4893 40.1494 25.6221 39.64 23.0952 37.8631C20.2729 35.8784 20 33.2037 20 30.0397C20 27.0867 21.0102 24.2439 23.51 22.2865C26.0868 20.2686 30.2133 20 34.1919 20C38.0607 20 42.3564 20.8422 44.9164 22.7631C47.5428 24.7337 48.3837 27.0028 48.3837 30.0397Z" fill="white"/>
+          <g id="p-eye-l">
+            <ellipse cx="28.4304" cy="28.8079" rx="4.78582" ry="6.60911" transform="rotate(3.83076 28.4304 28.8079)" fill="#082746"/>
+            <mask id="mask_pl" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="23" y="22" width="11" height="14"><ellipse cx="28.4304" cy="28.8079" rx="4.78582" ry="6.60911" transform="rotate(3.83076 28.4304 28.8079)" fill="white"/></mask>
+            <g mask="url(#mask_pl)"><path d="M28.7412 24.9455C29.7974 25.0164 30.5339 26.8637 30.3861 29.0724C30.2382 31.2813 29.262 33.0147 28.2056 32.9441C27.1492 32.8734 26.4128 31.0252 26.5607 28.8162C26.5673 28.7186 26.5773 28.622 26.587 28.5263C26.6034 28.5281 26.6197 28.5324 26.6364 28.5336C27.0311 28.56 27.3634 28.3914 27.379 28.1575C27.3943 27.9279 27.0988 27.7207 26.7146 27.6883C27.0593 26.0471 27.8731 24.8873 28.7412 24.9455Z" fill="white"/></g>
+          </g>
+          <g id="p-eye-r">
+            <ellipse cx="39.9361" cy="28.7957" rx="4.78582" ry="6.60911" transform="rotate(-3.98754 39.9361 28.7957)" fill="#082746"/>
+            <mask id="mask_pr" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="35" y="22" width="10" height="14"><ellipse cx="39.9361" cy="28.7957" rx="4.78582" ry="6.60911" transform="rotate(-3.98754 39.9361 28.7957)" fill="white"/></mask>
+            <g mask="url(#mask_pr)"><path d="M39.6893 24.6503C40.7454 24.5768 41.7264 26.3068 41.8805 28.515C42.0346 30.7235 41.3033 32.5736 40.2471 32.6475C39.1909 32.7211 38.2099 30.9903 38.0559 28.7818C38.049 28.6841 38.0458 28.5871 38.0424 28.491C38.0589 28.4905 38.0756 28.4926 38.0924 28.4914C38.487 28.4639 38.7932 28.2517 38.7769 28.0179C38.7608 27.7883 38.4399 27.6233 38.0548 27.6434C38.1729 25.9706 38.8214 24.7108 39.6893 24.6503Z" fill="white"/></g>
+          </g>
+          <defs><filter id="f_player" x="0" y="0" width="68.3838" height="60.1494" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur"/></filter></defs>
+        </svg>
+      </div>
+    </div>
+    <p class="pix-hint">Your past is hunting you. Move smart!<br>It remembers everything.</p>
+  </div>
+  <div class="title-cta">
+    <p class="pix-prompt">Are you ready?</p>
+    <div class="pix-choices">
+      <div class="pix-opt">
+        <div class="pix-cursor">
+          <div class="pix-cursor-shadow"></div>
+          <div class="pix-cursor-fill" style="background: var(--c-yellow)"></div>
+        </div>
+        <button class="btn-fill" id="title-play">Yes</button>
+      </div>
+      <div class="pix-opt">
+        <div class="pix-cursor">
+          <div class="pix-cursor-shadow"></div>
+          <div class="pix-cursor-fill" style="background: var(--c-yellow-alt)"></div>
+        </div>
+        <button class="btn-outline hidden" id="title-howto">No</button>
+      </div>
+    </div>
   </div>
   <p class="footer-hint">JOYSTICK ONLY</p>
 </div>
 
 <!-- ═══ HOW TO PLAY ══════════════════════════════════════════ -->
-<div id="howto" class="screen">
+<div id="howto" class="screen pixel-screen">
   <p class="eyebrow">HOW IT WORKS</p>
   <div class="how-cards">
     <div class="how-card">
@@ -690,9 +833,24 @@
       </div>
     </div>
   </div>
-  <div class="btn-row">
-    <button class="btn-fill">START</button>
-    <button class="btn-outline">BACK</button>
+  <div class="title-cta">
+    <p class="pix-prompt">Ready to play?</p>
+    <div class="pix-choices">
+      <div class="pix-opt">
+        <div class="pix-cursor">
+          <div class="pix-cursor-shadow"></div>
+          <div class="pix-cursor-fill" style="background: var(--c-yellow)"></div>
+        </div>
+        <button class="btn-fill">Go!</button>
+      </div>
+      <div class="pix-opt">
+        <div class="pix-cursor">
+          <div class="pix-cursor-shadow"></div>
+          <div class="pix-cursor-fill" style="background: var(--c-yellow-alt)"></div>
+        </div>
+        <button class="btn-outline">Back</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -730,12 +888,24 @@
 </div>
 
 <!-- ═══ PAUSE ════════════════════════════════════════════════ -->
-<div id="pause">
+<div id="pause" class="pixel-screen">
   <h2>PAUSED</h2>
   <p id="pause-score-row">SCORE: <span id="pause-score">0</span></p>
-  <div class="btn-row">
-    <button class="btn-fill">RESUME</button>
-    <button class="btn-outline">QUIT</button>
+  <div class="pix-choices">
+    <div class="pix-opt">
+      <div class="pix-cursor">
+        <div class="pix-cursor-shadow"></div>
+        <div class="pix-cursor-fill" style="background: var(--c-yellow)"></div>
+      </div>
+      <button class="btn-fill">Resume</button>
+    </div>
+    <div class="pix-opt">
+      <div class="pix-cursor">
+        <div class="pix-cursor-shadow"></div>
+        <div class="pix-cursor-fill" style="background: var(--c-yellow-alt)"></div>
+      </div>
+      <button class="btn-outline">Quit</button>
+    </div>
   </div>
 </div>
 
@@ -745,7 +915,7 @@
 </div>
 
 <!-- ═══ GAME OVER ════════════════════════════════════════════ -->
-<div id="gameover" class="screen">
+<div id="gameover" class="screen pixel-screen">
   <div class="go-main">
     <div class="go-top">
       <div class="go-title-area">
@@ -764,19 +934,19 @@
       </div>
     </div>
     <div class="go-actions">
-      <p class="go-prompt">Try again?</p>
-      <div class="go-choices">
-        <div class="go-opt">
-          <div class="go-cursor">
-            <div class="go-cursor-shadow"></div>
-            <div class="go-cursor-fill" style="background:#FFEC41"></div>
+      <p class="pix-prompt">Try again?</p>
+      <div class="pix-choices">
+        <div class="pix-opt">
+          <div class="pix-cursor">
+            <div class="pix-cursor-shadow"></div>
+            <div class="pix-cursor-fill" style="background: var(--c-yellow)"></div>
           </div>
           <button class="btn-fill">Yes</button>
         </div>
-        <div class="go-opt">
-          <div class="go-cursor">
-            <div class="go-cursor-shadow"></div>
-            <div class="go-cursor-fill" style="background:#FFD35B"></div>
+        <div class="pix-opt">
+          <div class="pix-cursor">
+            <div class="pix-cursor-shadow"></div>
+            <div class="pix-cursor-fill" style="background: var(--c-yellow-alt)"></div>
           </div>
           <button class="btn-outline">No</button>
         </div>
@@ -863,16 +1033,20 @@ const NAV_THRESH   = 0.85;
 // Per-screen button actions [left/0, right/1]
 const SCREEN_ACTIONS = {
   'controls-tutorial': [() => { localStorage.setItem('mimic_seen_controls', '1'); goTo('title'); }],
-  howto:    [() => startGame(),      () => goTo('title')],
+
   pause:    [() => togglePause(),    () => quitToTitle()],
-  gameover: [() => setTimeout(() => startGame(), 2000), () => setTimeout(() => goTo('title'), 2000)],
+  gameover: [() => setTimeout(() => startGame(), 1000), () => setTimeout(() => goTo('title'), 1000)],
+  howto:    [() => setTimeout(() => startGame(), 1000), () => setTimeout(() => goTo('title'), 1000)],
 };
 
 function getTitleActions() {
   if (localStorage.getItem('mimic_seen_howto') === '1') {
-    return [() => startGame(), () => goTo('howto')];
+    return [
+      () => setTimeout(() => startGame(), 1000),
+      () => setTimeout(() => goTo('howto'), 1000),
+    ];
   } else {
-    return [() => { markHowtoSeen(); goTo('howto'); }];
+    return [() => { markHowtoSeen(); setTimeout(() => goTo('howto'), 1000); }];
   }
 }
 
@@ -969,7 +1143,7 @@ function goTo(name) {
     if (raf) { cancelAnimationFrame(raf); raf = null; }
     isPaused = false;
     isDead   = false;
-    menuFocus = 0;
+    menuFocus = (name === 'gameover' || name === 'title' || name === 'howto') ? -1 : 0;
     refreshFocus(name);
     requireJoyRelease = true;
     startMenuLoop();
@@ -1550,13 +1724,72 @@ if (window !== window.top) {
   document.getElementById('hud').style.padding = '8vh 8vw 0';
 }
 
+// ── Title screen eye animation ────────────────────────────────────
+const pEyeL  = document.getElementById('p-eye-l');
+const pEyeR  = document.getElementById('p-eye-r');
+const mEyeL  = document.getElementById('m-eye-l');
+const mEyeR  = document.getElementById('m-eye-r');
+const pChar  = document.getElementById('player-char');
+const mChar  = document.getElementById('mimic-char');
+
+let eyeRaf = null, gazeTimer = null;
+let gazeTargX = 0, gazeTargY = 0, gazeCurX = 0, gazeCurY = 0;
+
+function pickGaze() {
+  const a = Math.random() * Math.PI * 2;
+  gazeTargX = Math.cos(a) * 1.8;
+  gazeTargY = Math.sin(a) * 1.8;
+  gazeTimer = setTimeout(pickGaze, 1200 + Math.random() * 2000);
+}
+
+function eyeLoop() {
+  gazeCurX += (gazeTargX - gazeCurX) * 0.04;
+  gazeCurY += (gazeTargY - gazeCurY) * 0.04;
+  if (pEyeL) {
+    const t = `translate(${gazeCurX}px,${gazeCurY}px)`;
+    pEyeL.style.transform = t;
+    pEyeR.style.transform = t;
+  }
+  if (pChar && mChar && mEyeL) {
+    const pr = pChar.getBoundingClientRect();
+    const mr = mChar.getBoundingClientRect();
+    const dx = (pr.left + pr.width * 0.5) - (mr.left + mr.width * 0.5);
+    const dy = (pr.top  + pr.height * 0.5) - (mr.top  + mr.height * 0.5);
+    const d  = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = (dx / d) * 1.8, ny = (dy / d) * 1.8;
+    mEyeL.style.transform = `translate(${nx}px,${ny}px)`;
+    mEyeR.style.transform = `translate(${nx}px,${ny}px)`;
+  }
+  eyeRaf = requestAnimationFrame(eyeLoop);
+}
+
+function startTitleEyes() {
+  if (eyeRaf) return;
+  pickGaze();
+  eyeLoop();
+}
+
+function stopTitleEyes() {
+  if (eyeRaf) { cancelAnimationFrame(eyeRaf); eyeRaf = null; }
+  if (gazeTimer) { clearTimeout(gazeTimer); gazeTimer = null; }
+}
+
+// Hook into goTo so eyes run only while title is active
+const _goTo = goTo;
+goTo = function(name) {
+  _goTo(name);
+  if (name === 'title') startTitleEyes();
+  else stopTitleEyes();
+};
+
 // ── Boot ──────────────────────────────────────────────────────────
 if (localStorage.getItem('mimic_seen_howto') === '1') {
   document.getElementById('title-howto').classList.remove('hidden');
 }
 const bootScreen = localStorage.getItem('mimic_seen_controls') === '1' ? 'title' : 'controls-tutorial';
-menuFocus = 0;
+menuFocus = (bootScreen === 'title') ? -1 : 0;
 refreshFocus(bootScreen);
+if (bootScreen === 'title') startTitleEyes();
 startMenuLoop();
 document.getElementById(bootScreen).classList.add('active');
 </script>

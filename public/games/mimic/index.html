@@ -1014,6 +1014,7 @@ let mx = -9999, my = -9999, mimicOn = false;
 let mIdx = 0;
 let mimicLookX = 0, mimicLookY = 0;
 let loopStartT = 0;
+let lastTs   = 0;
 let score    = 0;
 let best     = 0;
 let toReset, resetCount, spawnDelay;
@@ -1292,7 +1293,7 @@ function startGame() {
   history  = [];
   mimicOn  = false;
   mx = -9999; my = -9999;
-  mIdx = 0; loopStartT = 0;
+  mIdx = 0; loopStartT = 0; lastTs = 0;
   mimicLookX = 0; mimicLookY = 0;
   score      = 0;
   toReset    = RESET_NEED;
@@ -1324,6 +1325,15 @@ function loop(ts) {
 
   if (isPaused) return;
 
+  // Delta-time multiplier — keeps movement speed tied to real elapsed time
+  // instead of to requestAnimationFrame's rate (which varies with display
+  // refresh rate, e.g. 90/120/144Hz), so the game doesn't run fast on those
+  // screens. 1.0 == one 60fps frame's worth of time; capped to avoid a
+  // teleport-style jump after a long stall (tab backgrounded, GC pause, etc).
+  if (!lastTs) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / (1000 / 60), 3);
+  lastTs = ts;
+
   // Input
   let dx = 0, dy = 0;
   if (joy.dragging) {
@@ -1337,8 +1347,8 @@ function loop(ts) {
 
   const mag = Math.sqrt(dx * dx + dy * dy);
   if (mag > 0) {
-    px += (dx / mag) * P_SPEED;
-    py += (dy / mag) * P_SPEED;
+    px += (dx / mag) * P_SPEED * dt;
+    py += (dy / mag) * P_SPEED * dt;
   }
   px = Math.max(P_R, Math.min(W - P_R, px));
   py = Math.max(P_R, Math.min(H - P_R, py));
@@ -1369,8 +1379,8 @@ function loop(ts) {
       const dx = tx - mx, dy = ty - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist > 0) { mimicLookX = dx / dist; mimicLookY = dy / dist; }
-      if (dist <= M_SPEED) { mx = tx; my = ty; mIdx++; }
-      else { mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
+      if (dist <= M_SPEED * dt) { mx = tx; my = ty; mIdx++; }
+      else { mx += (dx / dist) * M_SPEED * dt; my += (dy / dist) * M_SPEED * dt; }
     } else {
       if (mx === -9999) {
         if (history.length === 0) {
@@ -1383,7 +1393,7 @@ function loop(ts) {
       }
       const dx = px - mx, dy = py - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 0.5) { mimicLookX = dx / dist; mimicLookY = dy / dist; mx += (dx / dist) * M_SPEED; my += (dy / dist) * M_SPEED; }
+      if (dist > 0.5) { mimicLookX = dx / dist; mimicLookY = dy / dist; mx += (dx / dist) * M_SPEED * dt; my += (dy / dist) * M_SPEED * dt; }
     }
   }
   if (mimicOn) {
@@ -1680,7 +1690,7 @@ function togglePause() {
     document.getElementById('pause').classList.remove('active');
     document.querySelectorAll('.btn-fill, .btn-outline').forEach(b => b.classList.remove('focused'));
     stopMenuLoop();
-    runCountdown(() => { isPaused = false; });
+    runCountdown(() => { isPaused = false; lastTs = 0; });
   }
 }
 

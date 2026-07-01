@@ -125,7 +125,7 @@
     .title-mimic-char {
       position: absolute;
       left: calc(var(--logo-sz) * -0.1 - 20px);
-      bottom: calc(var(--logo-sz) * 0.05 - 40px);
+      bottom: calc(var(--logo-sz) * 0.05 - 20px);
       width: calc(var(--logo-sz) * 1.08);
       aspect-ratio: 69 / 61;
       pointer-events: none;
@@ -135,7 +135,7 @@
     .title-player-char {
       position: absolute;
       right: calc(var(--logo-sz) * -0.05 - 20px);
-      top: calc(var(--logo-sz) * -0.1 - 20px);
+      top: calc(var(--logo-sz) * -0.1 - 4px);
       width: calc(var(--logo-sz) * 0.64);
       aspect-ratio: 69 / 61;
       pointer-events: none;
@@ -150,6 +150,9 @@
       50%       { transform: translateY(-10px); }
     }
     #title .pix-hint { margin-top: -40px; }
+    @media (max-width: 480px) {
+      #title .pix-hint { margin-top: -28px; }
+    }
     .title-cta {
       display: flex;
       flex-direction: column;
@@ -326,7 +329,7 @@
       color: var(--c-text-dim);
       letter-spacing: var(--tracking);
       text-transform: uppercase;
-      margin-bottom: 32px;
+      margin-bottom: 12px;
     }
     .how-cards {
       display: flex;
@@ -815,21 +818,21 @@
       <span class="num">01</span>
       <div>
         <div class="card-title">Move and collect</div>
-        <div class="card-desc">Navigate the arena. Collect every glowing orb you can find.</div>
+        <div class="card-desc">Navigate the arena. Grab every glowing orb.</div>
       </div>
     </div>
     <div class="how-card">
       <span class="num">02</span>
       <div>
         <div class="card-title">Your past hunts you</div>
-        <div class="card-desc">After 5 seconds, a mimic appears — tracing your exact path, closing in.</div>
+        <div class="card-desc">A mimic appears — tracing your exact path, closing in.</div>
       </div>
     </div>
     <div class="how-card">
       <span class="num">03</span>
       <div>
         <div class="card-title">Reset. But it remembers.</div>
-        <div class="card-desc">Collect enough to reset it. Every reset it comes back faster. There is no escape — only delay.</div>
+        <div class="card-desc">Collect enough to reset it. Each time it comes back faster.</div>
       </div>
     </div>
   </div>
